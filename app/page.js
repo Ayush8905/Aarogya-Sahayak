@@ -1,102 +1,223 @@
-import Image from "next/image";
+'use client';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    if (status === 'loading') return;
+
+    if (session) {
+      // Redirect based on user role
+      if (session.user.role === 'patient') {
+        router.push('/patient/dashboard');
+      } else if (session.user.role === 'worker') {
+        router.push('/worker/dashboard');
+      }
+    }
+  }, [session, status, router]);
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (session) {
+    return null; // Will redirect based on role
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-indigo-600">
+                🏥 Aarogya Sahayak
+              </h1>
+            </div>
+            <div className="flex space-x-4">
+              <Link
+                href="/auth/signin"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+            Connect with
+            <span className="text-indigo-600"> Health Workers</span>
+          </h1>
+          <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+            Get instant access to ASHA workers and community health professionals.
+            Chat, schedule appointments, and receive healthcare guidance from certified experts.
+          </p>
+          <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
+            <div className="rounded-md shadow">
+              <Link
+                href="/auth/signup"
+                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
+              >
+                Get Started
+              </Link>
+            </div>
+            <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
+              <Link
+                href="/auth/signin"
+                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
+              >
+                Sign In
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="mt-20">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Chat Feature */}
+            <div className="pt-6">
+              <div className="flow-root bg-white rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div>
+                    <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
+                      <div className="text-2xl text-white">💬</div>
+                    </span>
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
+                    Direct Messaging
+                  </h3>
+                  <p className="mt-5 text-base text-gray-500">
+                    Chat directly with ASHA workers and health professionals. Get instant responses and guidance for your health concerns.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Appointment Feature */}
+            <div className="pt-6">
+              <div className="flow-root bg-white rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div>
+                    <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
+                      <div className="text-2xl text-white">📅</div>
+                    </span>
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
+                    Easy Scheduling
+                  </h3>
+                  <p className="mt-5 text-base text-gray-500">
+                    Book appointments with health workers at your convenience. Get reminders and follow-up notifications.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Feature */}
+            <div className="pt-6">
+              <div className="flow-root bg-white rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div>
+                    <span className="inline-flex items-center justify-center p-3 bg-red-500 rounded-md shadow-lg">
+                      <div className="text-2xl text-white">🚨</div>
+                    </span>
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
+                    Emergency Support
+                  </h3>
+                  <p className="mt-5 text-base text-gray-500">
+                    Get immediate help during emergencies. Priority access to health workers for urgent medical situations.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* User Types */}
+        <div className="mt-20">
+          <div className="text-center">
+            <h2 className="text-3xl font-extrabold text-gray-900">
+              Who Can Use Aarogya Sahayak?
+            </h2>
+          </div>
+          <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-2">
+            {/* For Patients */}
+            <div className="bg-white rounded-lg shadow-lg p-8">
+              <div className="text-center">
+                <div className="text-4xl mb-4">🙋‍♀️</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">For Patients</h3>
+                <ul className="text-left space-y-2 text-gray-600">
+                  <li>• Connect with certified ASHA workers</li>
+                  <li>• Get health advice and medication guidance</li>
+                  <li>• Schedule regular checkups and consultations</li>
+                  <li>• Emergency support when needed</li>
+                  <li>• Track your health journey</li>
+                </ul>
+                <Link
+                  href="/auth/signup"
+                  className="mt-6 inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
+                >
+                  Join as Patient
+                </Link>
+              </div>
+            </div>
+
+            {/* For Health Workers */}
+            <div className="bg-white rounded-lg shadow-lg p-8">
+              <div className="text-center">
+                <div className="text-4xl mb-4">👩‍⚕️</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">For Health Workers</h3>
+                <ul className="text-left space-y-2 text-gray-600">
+                  <li>• Manage your patient consultations</li>
+                  <li>• Efficient appointment scheduling</li>
+                  <li>• Secure communication platform</li>
+                  <li>• Track patient progress</li>
+                  <li>• Expand your reach in the community</li>
+                </ul>
+                <Link
+                  href="/auth/signup"
+                  className="mt-6 inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium"
+                >
+                  Join as Health Worker
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      {/* Footer */}
+      <footer className="bg-white">
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h3 className="text-lg font-medium text-gray-900">Aarogya Sahayak</h3>
+            <p className="mt-2 text-gray-600">
+              Connecting communities with quality healthcare
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
