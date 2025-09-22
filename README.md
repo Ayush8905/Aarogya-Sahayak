@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Aarogya Sahayak - Health Worker Connect Platform
 
-## Getting Started
+A comprehensive healthcare communication platform that connects patients with ASHA workers and community health professionals. Built with Next.js, MongoDB, and Socket.io for real-time communication.
 
-First, run the development server:
+## 🚀 Features
 
+### 🏥 **Core Healthcare Features**
+- **Direct Messaging**: Real-time chat between patients and health workers
+- **Appointment Booking**: Schedule consultations with health professionals
+- **Emergency Support**: Priority access for urgent medical situations
+- **Notification System**: Real-time updates and reminders
+
+### 👥 **User Management**
+- **Role-based Authentication**: Separate access for patients and health workers
+- **User Profiles**: Detailed profiles with medical history and specializations
+- **Worker-Patient Assignments**: Manage healthcare provider relationships
+
+### 💬 **Communication Tools**
+- **Real-time Chat**: Instant messaging with typing indicators
+- **Message History**: Complete conversation records
+- **File Sharing**: Support for medical documents (UI ready)
+- **Audio/Video Calls**: Interface ready for WebRTC integration
+
+### 📅 **Appointment Management**
+- **Flexible Scheduling**: Book appointments at convenient times
+- **Approval Workflow**: Workers can approve/reject requests
+- **Status Tracking**: Monitor appointment progress
+- **Reminder System**: Automated notifications
+
+## 🛠️ Technology Stack
+
+- **Frontend**: Next.js 14, React 18, Tailwind CSS
+- **Backend**: Next.js API Routes, Node.js
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: NextAuth.js with credential provider
+- **Real-time**: Socket.io for live communication
+- **Styling**: Tailwind CSS with responsive design
+
+## 📦 Installation & Setup
+
+### Prerequisites
+- Node.js (v18 or higher)
+- MongoDB Atlas account
+- npm or yarn package manager
+
+### 1. Clone the Repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/Ayush8905/Aarogya-Sahayak.git
+cd Aarogya-Sahayak
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 3. Environment Configuration
+Create a `.env` file in the root directory:
+```env
+# MongoDB Configuration
+MONGODB_URI=your_mongodb_connection_string
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# NextAuth Configuration
+NEXTAUTH_SECRET=your_super_secret_key
+NEXTAUTH_URL=http://localhost:3000
 
-## Learn More
+# App Configuration
+NODE_ENV=development
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Start Development Server
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Visit `http://localhost:3000` to see the application.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🏗️ Project Structure
 
-## Deploy on Vercel
+```
+├── app/
+│   ├── api/
+│   │   ├── auth/           # Authentication endpoints
+│   │   ├── appointments/   # Appointment management
+│   │   ├── messages/       # Messaging system
+│   │   ├── notifications/  # Notification handling
+│   │   └── users/          # User management
+│   ├── auth/
+│   │   ├── signin/         # Sign in page
+│   │   └── signup/         # Registration page
+│   ├── patient/
+│   │   ├── dashboard/      # Patient dashboard
+│   │   └── book-appointment/ # Appointment booking
+│   ├── worker/
+│   │   └── dashboard/      # Health worker dashboard
+│   ├── chat/[userId]/      # Chat interface
+│   └── layout.js           # Root layout
+├── models/
+│   ├── User.js             # User schema
+│   ├── Message.js          # Message schema
+│   ├── Appointment.js      # Appointment schema
+│   └── Notification.js     # Notification schema
+├── context/
+│   └── SocketContext.js    # Socket.io context
+├── lib/
+│   └── mongodb.js          # Database connection
+└── pages/api/
+    └── socket.js           # Socket.io server
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Developer
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Ayush Bhagwatkar**
+- GitHub: [@Ayush8905](https://github.com/Ayush8905)
+
+---
+
+**Made with ❤️ for better healthcare accessibility**
