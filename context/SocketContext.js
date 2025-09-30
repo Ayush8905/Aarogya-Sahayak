@@ -20,10 +20,17 @@ export const SocketProvider = ({ children }) => {
 
     useEffect(() => {
         if (session?.user?.id) {
-            const socketInstance = io(process.env.NODE_ENV === 'development'
-                ? 'http://localhost:3000'
-                : window.location.origin, {
-                path: '/api/socket'
+            // Get current port from window location
+            const currentPort = window.location.port || '3000';
+            const baseUrl = process.env.NODE_ENV === 'development'
+                ? `http://localhost:${currentPort}`
+                : window.location.origin;
+
+            const socketInstance = io(baseUrl, {
+                path: '/api/socket',
+                transports: ['polling', 'websocket'],
+                timeout: 20000,
+                forceNew: true
             });
 
             socketInstance.on('connect', () => {
@@ -34,6 +41,11 @@ export const SocketProvider = ({ children }) => {
 
             socketInstance.on('disconnect', () => {
                 console.log('Disconnected from socket server');
+                setConnected(false);
+            });
+
+            socketInstance.on('connect_error', (error) => {
+                console.log('Socket connection error:', error.message);
                 setConnected(false);
             });
 

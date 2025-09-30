@@ -37,10 +37,42 @@ export default function BookAppointment() {
             const response = await fetch('/api/users?role=worker');
             if (response.ok) {
                 const data = await response.json();
-                setWorkers(data.users);
+                setWorkers(data.users || []);
+            } else {
+                console.error('Failed to fetch workers');
+                // Set demo workers if API fails
+                setWorkers([
+                    {
+                        _id: 'demo-worker-1',
+                        name: 'Dr. Demo Smith',
+                        email: 'demo1@example.com',
+                        specialization: 'General Medicine'
+                    },
+                    {
+                        _id: 'demo-worker-2',
+                        name: 'Dr. Demo Johnson',
+                        email: 'demo2@example.com',
+                        specialization: 'Pediatrics'
+                    }
+                ]);
             }
         } catch (error) {
             console.error('Error fetching workers:', error);
+            // Set demo workers on error
+            setWorkers([
+                {
+                    _id: 'demo-worker-1',
+                    name: 'Dr. Demo Smith',
+                    email: 'demo1@example.com',
+                    specialization: 'General Medicine'
+                },
+                {
+                    _id: 'demo-worker-2',
+                    name: 'Dr. Demo Johnson',
+                    email: 'demo2@example.com',
+                    specialization: 'Pediatrics'
+                }
+            ]);
         } finally {
             setLoading(false);
         }
@@ -98,35 +130,42 @@ export default function BookAppointment() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md mx-auto">
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-extrabold text-gray-900">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl mx-auto">
+                <div className="text-center mb-8 animate-fadeIn">
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-custom">
+                        <span className="text-white text-2xl">📅</span>
+                    </div>
+                    <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         Book an Appointment
                     </h2>
-                    <p className="mt-2 text-sm text-gray-600">
+                    <p className="mt-3 text-lg text-gray-600">
                         Schedule a consultation with a health worker
                     </p>
                 </div>
 
-                <div className="bg-white shadow rounded-lg p-6">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="glass shadow-2xl rounded-3xl p-8 animate-slideIn">
+                    <form onSubmit={handleSubmit} className="space-y-8">
                         {/* Health Worker Selection */}
-                        <div>
-                            <label htmlFor="workerId" className="block text-sm font-medium text-gray-700">
-                                Select Health Worker
+                        <div className="animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+                            <label htmlFor="workerId" className="block text-sm font-bold text-gray-700 mb-2">
+                                🩺 Select Health Worker
                             </label>
                             <select
                                 id="workerId"
                                 name="workerId"
                                 required
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900"
                                 value={formData.workerId}
                                 onChange={handleChange}
+                                style={{
+                                    color: '#1f2937 !important',
+                                    backgroundColor: 'white !important'
+                                }}
                             >
-                                <option value="">Choose a health worker</option>
+                                <option value="" style={{ color: '#9ca3af' }}>Choose a health worker</option>
                                 {workers.map((worker) => (
-                                    <option key={worker._id} value={worker._id}>
+                                    <option key={worker._id} value={worker._id} style={{ color: '#1f2937' }}>
                                         {worker.name} - {worker.specialization} ({worker.experience} years exp.)
                                     </option>
                                 ))}
@@ -134,45 +173,53 @@ export default function BookAppointment() {
                         </div>
 
                         {/* Appointment Title */}
-                        <div>
-                            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                                Appointment Title
+                        <div className="animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+                            <label htmlFor="title" className="block text-sm font-bold text-gray-700 mb-2">
+                                📝 Appointment Title
                             </label>
                             <input
                                 type="text"
                                 id="title"
                                 name="title"
                                 required
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900"
                                 placeholder="e.g., General Checkup, Fever Consultation"
                                 value={formData.title}
                                 onChange={handleChange}
+                                style={{
+                                    color: '#1f2937 !important',
+                                    backgroundColor: 'white !important'
+                                }}
                             />
                         </div>
 
                         {/* Appointment Type */}
-                        <div>
-                            <label htmlFor="appointmentType" className="block text-sm font-medium text-gray-700">
-                                Appointment Type
+                        <div className="animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+                            <label htmlFor="appointmentType" className="block text-sm font-bold text-gray-700 mb-2">
+                                🏥 Appointment Type
                             </label>
                             <select
                                 id="appointmentType"
                                 name="appointmentType"
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900"
                                 value={formData.appointmentType}
                                 onChange={handleChange}
+                                style={{
+                                    color: '#1f2937 !important',
+                                    backgroundColor: 'white !important'
+                                }}
                             >
-                                <option value="consultation">Consultation</option>
-                                <option value="checkup">Regular Checkup</option>
-                                <option value="follow-up">Follow-up</option>
-                                <option value="emergency">Emergency</option>
+                                <option value="consultation" style={{ color: '#1f2937' }}>💬 Consultation</option>
+                                <option value="checkup" style={{ color: '#1f2937' }}>🔍 Regular Checkup</option>
+                                <option value="follow-up" style={{ color: '#1f2937' }}>🔄 Follow-up</option>
+                                <option value="emergency" style={{ color: '#1f2937' }}>🚨 Emergency</option>
                             </select>
                         </div>
 
                         {/* Scheduled Date and Time */}
-                        <div>
-                            <label htmlFor="scheduledDate" className="block text-sm font-medium text-gray-700">
-                                Preferred Date and Time
+                        <div className="animate-fadeIn" style={{ animationDelay: '0.4s' }}>
+                            <label htmlFor="scheduledDate" className="block text-sm font-bold text-gray-700 mb-2">
+                                📅 Preferred Date and Time
                             </label>
                             <input
                                 type="datetime-local"
@@ -180,84 +227,113 @@ export default function BookAppointment() {
                                 name="scheduledDate"
                                 required
                                 min={getCurrentDateTime()}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900"
                                 value={formData.scheduledDate}
                                 onChange={handleChange}
+                                style={{
+                                    color: '#1f2937 !important',
+                                    backgroundColor: 'white !important'
+                                }}
                             />
                         </div>
 
                         {/* Duration */}
-                        <div>
-                            <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
-                                Expected Duration (minutes)
+                        <div className="animate-fadeIn" style={{ animationDelay: '0.5s' }}>
+                            <label htmlFor="duration" className="block text-sm font-bold text-gray-700 mb-2">
+                                ⏱️ Expected Duration (minutes)
                             </label>
                             <select
                                 id="duration"
                                 name="duration"
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900"
                                 value={formData.duration}
                                 onChange={handleChange}
+                                style={{
+                                    color: '#1f2937 !important',
+                                    backgroundColor: 'white !important'
+                                }}
                             >
-                                <option value={15}>15 minutes</option>
-                                <option value={30}>30 minutes</option>
-                                <option value={45}>45 minutes</option>
-                                <option value={60}>1 hour</option>
+                                <option value={15} style={{ color: '#1f2937' }}>15 minutes</option>
+                                <option value={30} style={{ color: '#1f2937' }}>30 minutes</option>
+                                <option value={45} style={{ color: '#1f2937' }}>45 minutes</option>
+                                <option value={60} style={{ color: '#1f2937' }}>1 hour</option>
                             </select>
                         </div>
 
                         {/* Description */}
-                        <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                                Description of Issue (Optional)
+                        <div className="animate-fadeIn" style={{ animationDelay: '0.6s' }}>
+                            <label htmlFor="description" className="block text-sm font-bold text-gray-700 mb-2">
+                                📋 Description of Issue (Optional)
                             </label>
                             <textarea
                                 id="description"
                                 name="description"
                                 rows={4}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none bg-white text-gray-900"
                                 placeholder="Describe your symptoms or the reason for the appointment..."
                                 value={formData.description}
                                 onChange={handleChange}
+                                style={{
+                                    color: '#1f2937 !important',
+                                    backgroundColor: 'white !important'
+                                }}
                             />
                         </div>
 
                         {/* Submit Button */}
-                        <div className="flex space-x-3">
+                        <div className="flex space-x-4 animate-fadeIn" style={{ animationDelay: '0.7s' }}>
                             <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                className="flex-1 py-3 px-6 border border-gray-300 rounded-xl shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-300 btn-animated"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                                className="flex-1 py-3 px-6 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-300 btn-animated flex items-center justify-center space-x-2"
                             >
-                                {submitting ? 'Booking...' : 'Book Appointment'}
+                                {submitting ? (
+                                    <>
+                                        <div className="loading-shimmer w-4 h-4 rounded-full"></div>
+                                        <span>Booking...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>📅</span>
+                                        <span>Book Appointment</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </form>
                 </div>
 
-                {/* Information Card */}
-                <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex">
+                {/* Enhanced Information Card */}
+                <div className="mt-8 glass rounded-2xl p-6 animate-fadeIn" style={{ animationDelay: '0.8s' }}>
+                    <div className="flex items-start space-x-4">
                         <div className="flex-shrink-0">
-                            <div className="h-5 w-5 text-blue-400">ℹ️</div>
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-blue-600 text-xl">💡</span>
+                            </div>
                         </div>
-                        <div className="ml-3">
-                            <h3 className="text-sm font-medium text-blue-800">
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-800 mb-3">
                                 Booking Information
                             </h3>
-                            <div className="mt-2 text-sm text-blue-700">
-                                <ul className="list-disc list-inside space-y-1">
-                                    <li>Your appointment request will be sent to the selected health worker</li>
-                                    <li>You will receive a notification once the worker responds</li>
-                                    <li>You can chat with the worker while waiting for approval</li>
-                                    <li>Emergency appointments are prioritized</li>
-                                </ul>
+                            <div className="space-y-2">
+                                {[
+                                    "Your appointment request will be sent to the selected health worker",
+                                    "You will receive a notification once the worker responds",
+                                    "You can chat with the worker while waiting for approval",
+                                    "Emergency appointments are prioritized"
+                                ].map((info, index) => (
+                                    <div key={index} className="flex items-center space-x-3 text-sm text-gray-700">
+                                        <span className="text-green-500">✓</span>
+                                        <span>{info}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

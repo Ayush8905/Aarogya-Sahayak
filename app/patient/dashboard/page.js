@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -81,26 +81,53 @@ export default function PatientDashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-xl">Loading...</div>
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+                <div className="text-center">
+                    <div className="loading-shimmer w-16 h-16 rounded-full mx-auto mb-4"></div>
+                    <div className="text-xl text-gray-600 animate-pulse-custom">Loading Dashboard...</div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white shadow">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+            {/* Enhanced Header */}
+            <header className="glass shadow-lg sticky top-0 z-40 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16">
-                        <div className="flex items-center">
-                            <h1 className="text-xl font-semibold">Patient Dashboard</h1>
+                    <div className="flex justify-between items-center h-16">
+                        <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center animate-pulse-custom">
+                                <span className="text-white font-bold text-lg">🩺</span>
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                                    Patient Dashboard
+                                </h1>
+                                <p className="text-sm text-gray-600">Your health journey starts here</p>
+                            </div>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <span>Welcome, {session?.user?.name}</span>
+                            <div className="relative">
+                                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center notification-badge">
+                                    <span className="text-white text-xs">🔔</span>
+                                </div>
+                                {notifications.filter(n => !n.isRead).length > 0 && (
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs">{notifications.filter(n => !n.isRead).length}</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="hidden md:block">
+                                <span className="text-gray-700 font-medium">Welcome, {session?.user?.name}</span>
+                                <p className="text-sm text-gray-500">Patient ID: #{session?.user?.id?.slice(-6)}</p>
+                            </div>
                             <button
-                                onClick={() => signOut()}
-                                className="text-red-600 hover:text-red-800"
+                                onClick={() => signOut({
+                                    callbackUrl: '/',
+                                    redirect: true
+                                })}
+                                className="btn-animated bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium"
                             >
                                 Sign Out
                             </button>
@@ -109,34 +136,197 @@ export default function PatientDashboard() {
                 </div>
             </header>
 
-            <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                {/* Quick Actions */}
+                <div className="mb-8 animate-fadeIn">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Link
+                            href="/patient/book-appointment"
+                            className="glass p-6 rounded-2xl card-hover group transition-all duration-300"
+                        >
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
+                                    <span className="text-white text-xl">📅</span>
+                                </div>
+                                <h3 className="font-bold text-gray-800 mb-1">Book Appointment</h3>
+                                <p className="text-sm text-gray-600">Schedule a consultation</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="/chat"
+                            className="glass p-6 rounded-2xl card-hover group transition-all duration-300"
+                        >
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
+                                    <span className="text-white text-xl">💬</span>
+                                </div>
+                                <h3 className="font-bold text-gray-800 mb-1">Start Chat</h3>
+                                <p className="text-sm text-gray-600">Connect with workers</p>
+                            </div>
+                        </Link>
+
+                        <div className="glass p-6 rounded-2xl card-hover group transition-all duration-300 cursor-pointer">
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
+                                    <span className="text-white text-xl">📋</span>
+                                </div>
+                                <h3 className="font-bold text-gray-800 mb-1">Health Records</h3>
+                                <p className="text-sm text-gray-600">View your history</p>
+                            </div>
+                        </div>
+
+                        <div className="glass p-6 rounded-2xl card-hover group transition-all duration-300 cursor-pointer">
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
+                                    <span className="text-white text-xl">🚨</span>
+                                </div>
+                                <h3 className="font-bold text-gray-800 mb-1">Emergency</h3>
+                                <p className="text-sm text-gray-600">Urgent care</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {[
+                        {
+                            title: 'Total Appointments',
+                            value: appointments.length,
+                            icon: '📅',
+                            color: 'from-blue-500 to-blue-600',
+                            bgColor: 'bg-blue-50'
+                        },
+                        {
+                            title: 'Pending Approvals',
+                            value: appointments.filter(apt => apt.status === 'pending').length,
+                            icon: '⏰',
+                            color: 'from-orange-500 to-orange-600',
+                            bgColor: 'bg-orange-50'
+                        },
+                        {
+                            title: 'Available Workers',
+                            value: workers.length,
+                            icon: '👨‍⚕️',
+                            color: 'from-green-500 to-green-600',
+                            bgColor: 'bg-green-50'
+                        },
+                        {
+                            title: 'Notifications',
+                            value: notifications.filter(n => !n.isRead).length,
+                            icon: '🔔',
+                            color: 'from-purple-500 to-purple-600',
+                            bgColor: 'bg-purple-50'
+                        }
+                    ].map((stat, index) => (
+                        <div key={index} className={`${stat.bgColor} overflow-hidden shadow-lg rounded-xl card-hover animate-fadeIn`} style={{ animationDelay: `${index * 0.1}s` }}>
+                            <div className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
+                                        <p className="text-3xl font-bold text-gray-800">{stat.value}</p>
+                                    </div>
+                                    <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-full flex items-center justify-center text-white text-xl animate-bounce-custom`}>
+                                        {stat.icon}
+                                    </div>
+                                </div>
+                                <div className={`mt-4 h-2 bg-gradient-to-r ${stat.color} rounded-full`}></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* My Appointments */}
+                    <div className="glass shadow-xl rounded-2xl overflow-hidden">
+                        <div className="px-6 py-8">
+                            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span className="mr-3 text-3xl">📅</span>
+                                My Appointments
+                            </h3>
+                            <div className="space-y-4">
+                                {appointments.slice(0, 5).map((appointment, index) => (
+                                    <div key={appointment._id} className="border border-gray-200 rounded-xl p-4 card-hover bg-white/60 backdrop-blur-sm animate-slideIn" style={{ animationDelay: `${index * 0.1}s` }}>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-gray-800">{appointment.title}</h4>
+                                                <p className="text-sm text-gray-600 flex items-center mt-1">
+                                                    <span className="mr-2">👨‍⚕️</span>
+                                                    Worker: {appointment.worker?.name || 'Unassigned'}
+                                                </p>
+                                                <p className="text-sm text-gray-500 flex items-center">
+                                                    <span className="mr-2">📅</span>
+                                                    {new Date(appointment.scheduledDate).toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-col items-end space-y-2">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${appointment.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                    appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                        appointment.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                            'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                    {appointment.status}
+                                                </span>
+                                                {appointment.worker && (
+                                                    <Link
+                                                        href={`/chat/${appointment.worker._id}`}
+                                                        className="btn-animated bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium"
+                                                    >
+                                                        💬 Chat
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {appointments.length === 0 && (
+                                    <div className="text-center py-8">
+                                        <div className="text-6xl mb-4">📅</div>
+                                        <p className="text-gray-500 text-lg">No appointments yet</p>
+                                        <Link
+                                            href="/patient/book-appointment"
+                                            className="inline-block mt-4 btn-animated bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
+                                        >
+                                            Book Your First Appointment
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Available Health Workers */}
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
-                        <div className="px-4 py-5 sm:p-6">
-                            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    <div className="glass shadow-xl rounded-2xl overflow-hidden">
+                        <div className="px-6 py-8">
+                            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span className="mr-3 text-3xl">👨‍⚕️</span>
                                 Available Health Workers
                             </h3>
-                            <div className="space-y-3">
-                                {workers.map((worker) => (
-                                    <div key={worker._id} className="border rounded-lg p-3">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <h4 className="font-medium">{worker.name}</h4>
-                                                <p className="text-sm text-gray-600">{worker.specialization}</p>
-                                                <p className="text-xs text-gray-500">{worker.experience} years exp.</p>
+                            <div className="space-y-4">
+                                {workers.slice(0, 5).map((worker, index) => (
+                                    <div key={worker._id} className="card-hover bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl p-4 animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                                                    {worker.name?.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-800">{worker.name}</h4>
+                                                    <p className="text-sm text-gray-600">{worker.specialization}</p>
+                                                    <p className="text-xs text-gray-500">{worker.experience} years experience</p>
+                                                </div>
                                             </div>
-                                            <div className="space-x-2">
+                                            <div className="flex space-x-2">
                                                 <button
                                                     onClick={() => assignWorker(worker._id)}
-                                                    className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                                    className="btn-animated bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-medium"
                                                 >
                                                     Connect
                                                 </button>
                                                 <Link
                                                     href={`/chat/${worker._id}`}
-                                                    className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 inline-block"
+                                                    className="btn-animated bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium"
                                                 >
                                                     Chat
                                                 </Link>
@@ -144,60 +334,32 @@ export default function PatientDashboard() {
                                         </div>
                                     </div>
                                 ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Recent Appointments */}
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
-                        <div className="px-4 py-5 sm:p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                                    My Appointments
-                                </h3>
-                                <Link
-                                    href="/patient/book-appointment"
-                                    className="text-sm bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700"
-                                >
-                                    Book New
-                                </Link>
-                            </div>
-                            <div className="space-y-3">
-                                {appointments.slice(0, 5).map((appointment) => (
-                                    <div key={appointment._id} className="border rounded-lg p-3">
-                                        <h4 className="font-medium">{appointment.title}</h4>
-                                        <p className="text-sm text-gray-600">
-                                            With: {appointment.worker.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {new Date(appointment.scheduledDate).toLocaleString()}
-                                        </p>
-                                        <span className={`text-xs px-2 py-1 rounded-full ${appointment.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                                appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                    appointment.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                        'bg-gray-100 text-gray-800'
-                                            }`}>
-                                            {appointment.status}
-                                        </span>
+                                {workers.length === 0 && (
+                                    <div className="text-center py-8">
+                                        <div className="text-6xl mb-4">👨‍⚕️</div>
+                                        <p className="text-gray-500 text-lg">No workers available</p>
+                                        <p className="text-gray-400 text-sm">Please check back later</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Notifications */}
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
-                        <div className="px-4 py-5 sm:p-6">
-                            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                                Notifications
+                {/* Notifications Section */}
+                {notifications.length > 0 && (
+                    <div className="mt-8 glass shadow-xl rounded-2xl overflow-hidden animate-fadeIn">
+                        <div className="px-6 py-8">
+                            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span className="mr-3 text-3xl">🔔</span>
+                                Recent Notifications
                             </h3>
                             <div className="space-y-3">
-                                {notifications.slice(0, 5).map((notification) => (
-                                    <div key={notification._id} className={`border rounded-lg p-3 ${!notification.isRead ? 'bg-blue-50 border-blue-200' : ''
-                                        }`}>
-                                        <h4 className="font-medium text-sm">{notification.title}</h4>
-                                        <p className="text-xs text-gray-600">{notification.message}</p>
-                                        <p className="text-xs text-gray-400">
+                                {notifications.slice(0, 3).map((notification, index) => (
+                                    <div key={notification._id} className={`border rounded-xl p-4 animate-slideIn ${!notification.isRead ? 'bg-blue-50 border-blue-200' : 'bg-white/60 border-gray-200'}`} style={{ animationDelay: `${index * 0.1}s` }}>
+                                        <h4 className="font-semibold text-gray-800">{notification.title}</h4>
+                                        <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                                        <p className="text-xs text-gray-500 mt-2">
                                             {new Date(notification.createdAt).toLocaleString()}
                                         </p>
                                     </div>
@@ -205,46 +367,7 @@ export default function PatientDashboard() {
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="mt-8 bg-white shadow rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                            Quick Actions
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <Link
-                                href="/patient/book-appointment"
-                                className="text-center p-4 border rounded-lg hover:bg-gray-50"
-                            >
-                                <div className="text-2xl mb-2">📅</div>
-                                <div className="text-sm font-medium">Book Appointment</div>
-                            </Link>
-                            <Link
-                                href="/patient/messages"
-                                className="text-center p-4 border rounded-lg hover:bg-gray-50"
-                            >
-                                <div className="text-2xl mb-2">💬</div>
-                                <div className="text-sm font-medium">Messages</div>
-                            </Link>
-                            <Link
-                                href="/patient/health-records"
-                                className="text-center p-4 border rounded-lg hover:bg-gray-50"
-                            >
-                                <div className="text-2xl mb-2">📋</div>
-                                <div className="text-sm font-medium">Health Records</div>
-                            </Link>
-                            <Link
-                                href="/patient/emergency"
-                                className="text-center p-4 border rounded-lg hover:bg-red-50 border-red-200"
-                            >
-                                <div className="text-2xl mb-2">🚨</div>
-                                <div className="text-sm font-medium text-red-600">Emergency</div>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     );

@@ -91,6 +91,16 @@ export default function Home() {
               </Link>
             </div>
           </div>
+
+          {/* Test Connection Button */}
+          <div className="mt-4 text-center">
+            <Link
+              href="/test-connection"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              🔧 Test Connections
+            </Link>
+          </div>
         </div>
 
         {/* Features */}

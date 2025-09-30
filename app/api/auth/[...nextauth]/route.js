@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
-const authOptions = {
+export const authOptions = {
     providers: [
         CredentialsProvider({
             name: 'credentials',
@@ -19,7 +19,21 @@ const authOptions = {
                 }
 
                 try {
-                    await connectDB();
+                    const connection = await connectDB();
+
+                    if (!connection) {
+                        // Allow demo login when database is not available
+                        if (credentials.email === 'demo@example.com' && credentials.password === 'demo123') {
+                            return {
+                                id: 'demo-user',
+                                email: 'demo@example.com',
+                                name: 'Demo User',
+                                role: credentials.role || 'patient',
+                                profileImage: null
+                            };
+                        }
+                        throw new Error('Database not available. Use demo@example.com / demo123 for testing');
+                    }
 
                     const user = await User.findOne({
                         email: credentials.email.toLowerCase()
@@ -78,7 +92,14 @@ const authOptions = {
     },
     pages: {
         signIn: '/auth/signin',
-        signUp: '/auth/signup'
+        signUp: '/auth/signup',
+        signOut: '/'
+    },
+    events: {
+        async signOut(message) {
+            // Clean up any additional data if needed
+            console.log('User signed out:', message.token?.email);
+        }
     },
     secret: process.env.NEXTAUTH_SECRET,
 };
