@@ -409,12 +409,20 @@ export default function WorkerDashboard() {
                                         <span className="mr-3 text-3xl">💬</span>
                                         Patient Chat
                                     </h3>
-                                    <Link
-                                        href="/chat"
-                                        className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white px-6 py-2 rounded-full font-medium btn-animated"
-                                    >
-                                        View All Chats
-                                    </Link>
+                                    <div className="flex space-x-3">
+                                        <Link
+                                            href="/chat"
+                                            className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white px-4 py-2 rounded-full font-medium btn-animated"
+                                        >
+                                            View All Chats
+                                        </Link>
+                                        <Link
+                                            href="/video-consultations"
+                                            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-2 rounded-full font-medium btn-animated"
+                                        >
+                                            Video Calls
+                                        </Link>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

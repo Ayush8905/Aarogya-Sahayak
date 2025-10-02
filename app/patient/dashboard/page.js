@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -11,363 +11,264 @@ export default function PatientDashboard() {
     const [appointments, setAppointments] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (status === 'loading') return;
-
         if (!session) {
             router.push('/auth/signin');
             return;
         }
-
         if (session.user.role !== 'patient') {
             router.push('/worker/dashboard');
             return;
         }
-
         fetchData();
     }, [session, status]);
 
     const fetchData = async () => {
         try {
+            setError(null);
+            console.log('🔍 Fetching data for user:', session?.user?.email);
+
             const [workersRes, appointmentsRes, notificationsRes] = await Promise.all([
-                fetch('/api/users?role=worker'),
-                fetch('/api/appointments'),
-                fetch('/api/notifications')
+                fetch('/api/users?role=worker', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                }),
+                fetch('/api/appointments', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                }),
+                fetch('/api/notifications', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                })
             ]);
 
+            console.log('📊 API Response Status:', {
+                workers: workersRes.status,
+                appointments: appointmentsRes.status,
+                notifications: notificationsRes.status
+            });
+
+            // Handle workers response
             if (workersRes.ok) {
                 const workersData = await workersRes.json();
-                setWorkers(workersData.users);
+                console.log('👨‍⚕️ Workers data received:', workersData);
+                const workersArray = workersData.users || workersData || [];
+                console.log('👨‍⚕️ Workers array:', workersArray);
+                setWorkers(workersArray);
+            } else {
+                console.error('❌ Workers API failed:', workersRes.status, await workersRes.text());
+                setError('Failed to load healthcare workers');
             }
 
+            // Handle appointments response
             if (appointmentsRes.ok) {
                 const appointmentsData = await appointmentsRes.json();
-                setAppointments(appointmentsData.appointments);
+                console.log('📅 Appointments data:', appointmentsData);
+                const appointmentsArray = appointmentsData.appointments || appointmentsData || [];
+                setAppointments(appointmentsArray);
+            } else {
+                console.error('❌ Appointments API failed:', appointmentsRes.status, await appointmentsRes.text());
             }
 
+            // Handle notifications response
             if (notificationsRes.ok) {
                 const notificationsData = await notificationsRes.json();
-                setNotifications(notificationsData.notifications);
+                console.log('🔔 Notifications data:', notificationsData);
+                const notificationsArray = notificationsData.notifications || notificationsData || [];
+                setNotifications(notificationsArray);
+            } else {
+                console.error('❌ Notifications API failed:', notificationsRes.status, await notificationsRes.text());
             }
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('❌ Error fetching data:', error);
+            setError('Network error: Unable to fetch data');
         } finally {
             setLoading(false);
         }
     };
 
-    const assignWorker = async (workerId) => {
+    const bookAppointment = async (workerId) => {
         try {
-            const response = await fetch('/api/users', {
-                method: 'PUT',
+            console.log('📅 Booking appointment with worker:', workerId);
+            const response = await fetch('/api/appointments', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({
-                    action: 'assign',
-                    targetUserId: workerId
-                })
+                    workerId,
+                    title: 'General Consultation',
+                    description: 'General health consultation appointment',
+                    scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                    duration: 30,
+                    appointmentType: 'consultation'
+                }),
             });
 
+            const responseData = await response.json();
+            console.log('📅 Appointment booking response:', responseData);
+
             if (response.ok) {
-                alert('Worker assigned successfully!');
-                fetchData();
+                alert('Appointment booked successfully!');
+                fetchData(); // Refresh data
+            } else {
+                console.error('❌ Appointment booking failed:', responseData);
+                alert(`Failed to book appointment: ${responseData.error || 'Unknown error'}`);
             }
         } catch (error) {
-            console.error('Error assigning worker:', error);
+            console.error('❌ Error booking appointment:', error);
+            alert('Network error: Unable to book appointment');
         }
     };
 
-    if (loading) {
+    const handleSignOut = () => { signOut({ callbackUrl: '/' }); };
+
+    if (status === 'loading' || loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-                <div className="text-center">
-                    <div className="loading-shimmer w-16 h-16 rounded-full mx-auto mb-4"></div>
-                    <div className="text-xl text-gray-600 animate-pulse-custom">Loading Dashboard...</div>
-                </div>
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
             </div>
         );
     }
 
+    if (!session) return null;
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-            {/* Enhanced Header */}
-            <header className="glass shadow-lg sticky top-0 z-40 backdrop-blur-md">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+            <header className="bg-white shadow-sm border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
+                        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                            Aarogya Sahayak
+                        </h1>
                         <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center animate-pulse-custom">
-                                <span className="text-white font-bold text-lg">🩺</span>
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                                    Patient Dashboard
-                                </h1>
-                                <p className="text-sm text-gray-600">Your health journey starts here</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <div className="relative">
-                                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center notification-badge">
-                                    <span className="text-white text-xs">🔔</span>
-                                </div>
-                                {notifications.filter(n => !n.isRead).length > 0 && (
-                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                                        <span className="text-white text-xs">{notifications.filter(n => !n.isRead).length}</span>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="hidden md:block">
-                                <span className="text-gray-700 font-medium">Welcome, {session?.user?.name}</span>
-                                <p className="text-sm text-gray-500">Patient ID: #{session?.user?.id?.slice(-6)}</p>
-                            </div>
-                            <button
-                                onClick={() => signOut({
-                                    callbackUrl: '/',
-                                    redirect: true
-                                })}
-                                className="btn-animated bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium"
-                            >
+                            <span className="text-gray-700">Welcome, {session.user.name}</span>
+                            <button onClick={handleSignOut} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
                                 Sign Out
                             </button>
                         </div>
                     </div>
                 </div>
             </header>
-
-            <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                {/* Quick Actions */}
-                <div className="mb-8 animate-fadeIn">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <Link
-                            href="/patient/book-appointment"
-                            className="glass p-6 rounded-2xl card-hover group transition-all duration-300"
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <Link href="/appointments" className="glass p-6 rounded-2xl card-hover group">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mb-3">
+                                <span className="text-white text-xl">📅</span>
+                            </div>
+                            <h3 className="font-bold text-gray-800 mb-1">My Appointments</h3>
+                            <p className="text-sm text-gray-600">View & manage</p>
+                        </div>
+                    </Link>
+                    <Link href="/video-consultations" className="glass p-6 rounded-2xl card-hover group">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mb-3">
+                                <span className="text-white text-xl">📹</span>
+                            </div>
+                            <h3 className="font-bold text-gray-800 mb-1">Video Consultation</h3>
+                            <p className="text-sm text-gray-600">Connect via video</p>
+                        </div>
+                    </Link>
+                    <Link href="/health-records" className="glass p-6 rounded-2xl card-hover group">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mb-3">
+                                <span className="text-white text-xl">🏥</span>
+                            </div>
+                            <h3 className="font-bold text-gray-800 mb-1">Health Records</h3>
+                            <p className="text-sm text-gray-600">Medical history</p>
+                        </div>
+                    </Link>
+                    <Link href="/emergency" className="glass p-6 rounded-2xl card-hover group">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mb-3">
+                                <span className="text-white text-xl">🚨</span>
+                            </div>
+                            <h3 className="font-bold text-gray-800 mb-1">Emergency</h3>
+                            <p className="text-sm text-gray-600">Urgent help</p>
+                        </div>
+                    </Link>
+                </div>
+                {/* Error Display */}
+                {error && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                        <p className="font-bold">Error:</p>
+                        <p>{error}</p>
+                        <button
+                            onClick={fetchData}
+                            className="mt-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
                         >
-                            <div className="flex flex-col items-center text-center">
-                                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
-                                    <span className="text-white text-xl">📅</span>
-                                </div>
-                                <h3 className="font-bold text-gray-800 mb-1">Book Appointment</h3>
-                                <p className="text-sm text-gray-600">Schedule a consultation</p>
-                            </div>
-                        </Link>
-
-                        <Link
-                            href="/chat"
-                            className="glass p-6 rounded-2xl card-hover group transition-all duration-300"
-                        >
-                            <div className="flex flex-col items-center text-center">
-                                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
-                                    <span className="text-white text-xl">💬</span>
-                                </div>
-                                <h3 className="font-bold text-gray-800 mb-1">Start Chat</h3>
-                                <p className="text-sm text-gray-600">Connect with workers</p>
-                            </div>
-                        </Link>
-
-                        <div className="glass p-6 rounded-2xl card-hover group transition-all duration-300 cursor-pointer">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
-                                    <span className="text-white text-xl">📋</span>
-                                </div>
-                                <h3 className="font-bold text-gray-800 mb-1">Health Records</h3>
-                                <p className="text-sm text-gray-600">View your history</p>
-                            </div>
-                        </div>
-
-                        <div className="glass p-6 rounded-2xl card-hover group transition-all duration-300 cursor-pointer">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
-                                    <span className="text-white text-xl">🚨</span>
-                                </div>
-                                <h3 className="font-bold text-gray-800 mb-1">Emergency</h3>
-                                <p className="text-sm text-gray-600">Urgent care</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {[
-                        {
-                            title: 'Total Appointments',
-                            value: appointments.length,
-                            icon: '📅',
-                            color: 'from-blue-500 to-blue-600',
-                            bgColor: 'bg-blue-50'
-                        },
-                        {
-                            title: 'Pending Approvals',
-                            value: appointments.filter(apt => apt.status === 'pending').length,
-                            icon: '⏰',
-                            color: 'from-orange-500 to-orange-600',
-                            bgColor: 'bg-orange-50'
-                        },
-                        {
-                            title: 'Available Workers',
-                            value: workers.length,
-                            icon: '👨‍⚕️',
-                            color: 'from-green-500 to-green-600',
-                            bgColor: 'bg-green-50'
-                        },
-                        {
-                            title: 'Notifications',
-                            value: notifications.filter(n => !n.isRead).length,
-                            icon: '🔔',
-                            color: 'from-purple-500 to-purple-600',
-                            bgColor: 'bg-purple-50'
-                        }
-                    ].map((stat, index) => (
-                        <div key={index} className={`${stat.bgColor} overflow-hidden shadow-lg rounded-xl card-hover animate-fadeIn`} style={{ animationDelay: `${index * 0.1}s` }}>
-                            <div className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                                        <p className="text-3xl font-bold text-gray-800">{stat.value}</p>
-                                    </div>
-                                    <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-full flex items-center justify-center text-white text-xl animate-bounce-custom`}>
-                                        {stat.icon}
-                                    </div>
-                                </div>
-                                <div className={`mt-4 h-2 bg-gradient-to-r ${stat.color} rounded-full`}></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* My Appointments */}
-                    <div className="glass shadow-xl rounded-2xl overflow-hidden">
-                        <div className="px-6 py-8">
-                            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                                <span className="mr-3 text-3xl">📅</span>
-                                My Appointments
-                            </h3>
-                            <div className="space-y-4">
-                                {appointments.slice(0, 5).map((appointment, index) => (
-                                    <div key={appointment._id} className="border border-gray-200 rounded-xl p-4 card-hover bg-white/60 backdrop-blur-sm animate-slideIn" style={{ animationDelay: `${index * 0.1}s` }}>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex-1">
-                                                <h4 className="font-semibold text-gray-800">{appointment.title}</h4>
-                                                <p className="text-sm text-gray-600 flex items-center mt-1">
-                                                    <span className="mr-2">👨‍⚕️</span>
-                                                    Worker: {appointment.worker?.name || 'Unassigned'}
-                                                </p>
-                                                <p className="text-sm text-gray-500 flex items-center">
-                                                    <span className="mr-2">📅</span>
-                                                    {new Date(appointment.scheduledDate).toLocaleString()}
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-col items-end space-y-2">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${appointment.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                                    appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                        appointment.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                    }`}>
-                                                    {appointment.status}
-                                                </span>
-                                                {appointment.worker && (
-                                                    <Link
-                                                        href={`/chat/${appointment.worker._id}`}
-                                                        className="btn-animated bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium"
-                                                    >
-                                                        💬 Chat
-                                                    </Link>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {appointments.length === 0 && (
-                                    <div className="text-center py-8">
-                                        <div className="text-6xl mb-4">📅</div>
-                                        <p className="text-gray-500 text-lg">No appointments yet</p>
-                                        <Link
-                                            href="/patient/book-appointment"
-                                            className="inline-block mt-4 btn-animated bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
-                                        >
-                                            Book Your First Appointment
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Available Health Workers */}
-                    <div className="glass shadow-xl rounded-2xl overflow-hidden">
-                        <div className="px-6 py-8">
-                            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                                <span className="mr-3 text-3xl">👨‍⚕️</span>
-                                Available Health Workers
-                            </h3>
-                            <div className="space-y-4">
-                                {workers.slice(0, 5).map((worker, index) => (
-                                    <div key={worker._id} className="card-hover bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl p-4 animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                                                    {worker.name?.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-semibold text-gray-800">{worker.name}</h4>
-                                                    <p className="text-sm text-gray-600">{worker.specialization}</p>
-                                                    <p className="text-xs text-gray-500">{worker.experience} years experience</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => assignWorker(worker._id)}
-                                                    className="btn-animated bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-medium"
-                                                >
-                                                    Connect
-                                                </button>
-                                                <Link
-                                                    href={`/chat/${worker._id}`}
-                                                    className="btn-animated bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium"
-                                                >
-                                                    Chat
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {workers.length === 0 && (
-                                    <div className="text-center py-8">
-                                        <div className="text-6xl mb-4">👨‍⚕️</div>
-                                        <p className="text-gray-500 text-lg">No workers available</p>
-                                        <p className="text-gray-400 text-sm">Please check back later</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Notifications Section */}
-                {notifications.length > 0 && (
-                    <div className="mt-8 glass shadow-xl rounded-2xl overflow-hidden animate-fadeIn">
-                        <div className="px-6 py-8">
-                            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                                <span className="mr-3 text-3xl">🔔</span>
-                                Recent Notifications
-                            </h3>
-                            <div className="space-y-3">
-                                {notifications.slice(0, 3).map((notification, index) => (
-                                    <div key={notification._id} className={`border rounded-xl p-4 animate-slideIn ${!notification.isRead ? 'bg-blue-50 border-blue-200' : 'bg-white/60 border-gray-200'}`} style={{ animationDelay: `${index * 0.1}s` }}>
-                                        <h4 className="font-semibold text-gray-800">{notification.title}</h4>
-                                        <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            {new Date(notification.createdAt).toLocaleString()}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                            Retry
+                        </button>
                     </div>
                 )}
+
+                <div className="glass p-6 rounded-2xl">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold text-gray-800">Available Healthcare Workers</h2>
+                        <button
+                            onClick={fetchData}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                        >
+                            Refresh
+                        </button>
+                    </div>
+
+                    {loading ? (
+                        <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                            <p className="mt-2 text-gray-600">Loading healthcare workers...</p>
+                        </div>
+                    ) : workers.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {workers.map((worker) => (
+                                <div key={worker._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                                    <div className="flex items-center mb-4">
+                                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
+                                            <span className="text-white font-bold text-lg">{worker.name?.charAt(0) || 'D'}</span>
+                                        </div>
+                                        <div className="ml-3">
+                                            <h3 className="font-bold text-gray-800">{worker.name || 'Unknown Doctor'}</h3>
+                                            <p className="text-sm text-gray-600">{worker.specialization || 'General Medicine'}</p>
+                                            <p className="text-xs text-gray-500">{worker.email}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => bookAppointment(worker._id)}
+                                        className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                                    >
+                                        Book Appointment
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <div className="text-6xl mb-4">👨‍⚕️</div>
+                            <p className="text-gray-600 mb-4">No healthcare workers found</p>
+                            <button
+                                onClick={fetchData}
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

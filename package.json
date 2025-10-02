@@ -6,19 +6,30 @@
     "dev": "node ./node_modules/next/dist/bin/next dev",
     "build": "node ./node_modules/next/dist/bin/next build",
     "start": "node ./node_modules/next/dist/bin/next start",
+    "signaling": "node signaling-server.js",
+    "dev:full": "concurrently \"npm run dev\" \"npm run signaling\"",
+    "seed": "node scripts/seed-database.js",
+    "test-db": "node scripts/test-connection.js",
     "lint": "biome check",
     "format": "biome format --write"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "concurrently": "^8.2.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "http": "^0.0.1-security",
+    "lucide-react": "^0.263.1",
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.2",
     "next": "^14.2.32",
     "next-auth": "^4.24.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "simple-peer": "^9.11.1",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "webrtc-adapter": "^9.0.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",

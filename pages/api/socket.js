@@ -57,6 +57,33 @@ const SocketHandler = (req, res) => {
                 }
             });
 
+            // Video consultation signaling
+            socket.on('join-video-room', ({ roomId, participantId }) => {
+                console.log(`Participant ${participantId} joining video room ${roomId}`);
+                socket.join(roomId);
+                socket.to(roomId).emit('participant-joined', { participantId, socketId: socket.id });
+            });
+
+            socket.on('video-offer', ({ roomId, offer, participantId }) => {
+                console.log(`Video offer from ${participantId} in room ${roomId}`);
+                socket.to(roomId).emit('video-offer', { offer, participantId, socketId: socket.id });
+            });
+
+            socket.on('video-answer', ({ roomId, answer, participantId }) => {
+                console.log(`Video answer from ${participantId} in room ${roomId}`);
+                socket.to(roomId).emit('video-answer', { answer, participantId, socketId: socket.id });
+            });
+
+            socket.on('ice-candidate', ({ roomId, candidate, participantId }) => {
+                socket.to(roomId).emit('ice-candidate', { candidate, participantId, socketId: socket.id });
+            });
+
+            socket.on('leave-video-room', ({ roomId, participantId }) => {
+                console.log(`Participant ${participantId} leaving video room ${roomId}`);
+                socket.to(roomId).emit('participant-left', { participantId, socketId: socket.id });
+                socket.leave(roomId);
+            });
+
             // Handle user disconnect
             socket.on('disconnect', () => {
                 if (socket.userId) {

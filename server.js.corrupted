@@ -1,0 +1,534 @@
+// Socket.IO server for real-time video consultation signaling
+const { createServer } = require('http');
+const { parse } = require('url');
+const next = require('next');
+const { Server } = require('socket.io');
+
+const dev = process.env.NODE_ENV !== 'production';
+const hostname = 'localhost';
+const port = process.env.PORT || 3001;
+
+// Create Next.js app instance
+const app = next({ dev, hostname, port });
+const handle = app.getRequestHandler();
+
+// Room management
+const rooms = new Map();
+const participants = new Map();
+
+// Helper function to log with timestamp
+const log = (message, data = null) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+};
+
+app.prepare().then(() => {
+    const server = createServer(async (req, res) => {
+        try {
+            const parsedUrl = parse(req.url, true);
+            await handle(req, res, parsedUrl);
+        } catch (err) {
+            console.error('Error occurred handling', req.url, err);
+            res.statusCode = 500;
+            res.end('internal server error');
+        }
+    });
+
+    // Initialize Socket.IO server
+    const io = new Server(server, {
+        cors: {
+            origin: process.env.NEXTAUTH_URL || "http://localhost:3000",
+            methods: ["GET", "POST"]
+        },
+        transports: ['websocket', 'polling']
+    });
+
+    // Socket.IO connection handling
+    io.on('connection', (socket) => {
+        log(`Client connected: ${socket.id}`);
+
+        // Join video consultation room
+        socket.on('join-video-room', (roomId) => {
+            socket.join(roomId);
+            
+            if (!rooms.has(roomId)) {
+                rooms.set(roomId, new Set());
+            }
+            
+            rooms.get(roomId).add(socket.id);
+            participants.set(socket.id, roomId);
+            
+            log(`Socket ${socket.id} joined room: ${roomId}`);
+            socket.to(roomId).emit('user-joined', socket.id);
+        });
+
+        // Handle video offer
+        socket.on('video-offer', (data) => {
+            const { roomId, offer, targetSocketId } = data;
+            log(`Video offer from ${socket.id} to ${targetSocketId} in room ${roomId}`);
+            socket.to(targetSocketId).emit('video-offer', {
+                offer,
+                fromSocketId: socket.id
+            });
+        });
+
+        // Handle video answer
+        socket.on('video-answer', (data) => {
+            const { answer, targetSocketId } = data;
+            log(`Video answer from ${socket.id} to ${targetSocketId}`);
+            socket.to(targetSocketId).emit('video-answer', {
+                answer,
+                fromSocketId: socket.id
+            });
+        });
+
+        // Handle ICE candidates
+        socket.on('ice-candidate', (data) => {
+            const { candidate, targetSocketId } = data;
+            socket.to(targetSocketId).emit('ice-candidate', {
+                candidate,
+                fromSocketId: socket.id
+            });
+        });
+
+        // Leave video room
+        socket.on('leave-video-room', () => {
+            const roomId = participants.get(socket.id);
+            if (roomId && rooms.has(roomId)) {
+                rooms.get(roomId).delete(socket.id);
+                socket.to(roomId).emit('user-left', socket.id);
+                socket.leave(roomId);
+                log(`Socket ${socket.id} left room: ${roomId}`);
+            }
+            participants.delete(socket.id);
+        });
+
+        // Handle disconnection
+        socket.on('disconnect', () => {
+            const roomId = participants.get(socket.id);
+            if (roomId && rooms.has(roomId)) {
+                rooms.get(roomId).delete(socket.id);
+                socket.to(roomId).emit('user-left', socket.id);
+                
+                if (rooms.get(roomId).size === 0) {
+                    rooms.delete(roomId);
+                }
+            }
+            participants.delete(socket.id);
+            log(`Client disconnected: ${socket.id}`);
+        });
+    });
+
+    server.listen(port, (err) => {
+        if (err) throw err;
+        console.log(`> Ready on http://${hostname}:${port}`);
+        console.log(`> Socket.IO server initialized`);
+        console.log(`> Aarogya Sahayak server running at http://localhost:${port}`);
+    });
+});
+        socket.on('join-room', ({ roomId, participantId, consultationId }) => {
+            log(`Join room request`, { roomId, participantId, consultationId, socketId: socket.id });
+
+            try {
+                // Initialize room if it doesn't exist
+                if (!rooms.has(roomId)) {
+                    rooms.set(roomId, {
+                        id: roomId,
+                        consultationId,
+                        participants: new Set(),
+                        createdAt: new Date(),
+                        maxParticipants: 10 // Configurable
+                    });
+                    log(`Room created: ${roomId}`);
+                }
+
+                const room = rooms.get(roomId);
+
+                // Check room capacity
+                if (room.participants.size >= room.maxParticipants) {
+                    socket.emit('room-full', { roomId });
+                    log(`Room full: ${roomId}`, { currentParticipants: room.participants.size });
+                    return;
+                }
+
+                // Join the socket room
+                socket.join(roomId);
+
+                // Store participant information
+                const participantInfo = {
+                    id: participantId,
+                    socketId: socket.id,
+                    roomId,
+                    consultationId,
+                    joinedAt: new Date(),
+                    isActive: true
+                };
+
+                participants.set(socket.id, participantInfo);
+                room.participants.add(socket.id);
+
+                // Notify other participants in the room
+                socket.to(roomId).emit('participant-joined', {
+                    participantId,
+                    socketId: socket.id,
+                    joinedAt: participantInfo.joinedAt
+                });
+
+                // Send current room info to the joining participant
+                const otherParticipants = Array.from(room.participants)
+                    .filter(socketId => socketId !== socket.id)
+                    .map(socketId => participants.get(socketId))
+                    .filter(Boolean);
+
+                socket.emit('room-joined', {
+                    roomId,
+                    participantId,
+                    otherParticipants: otherParticipants.map(p => ({
+                        participantId: p.id,
+                        socketId: p.socketId,
+                        joinedAt: p.joinedAt
+                    }))
+                });
+
+                log(`Participant joined room`, { 
+                    roomId, 
+                    participantId, 
+                    totalParticipants: room.participants.size 
+                });
+
+            } catch (error) {
+                log(`Error joining room: ${error.message}`, { roomId, participantId });
+                socket.emit('room-error', { 
+                    error: 'Failed to join room',
+                    details: error.message 
+                });
+            }
+        });
+
+        // WebRTC offer signaling
+        socket.on('offer', ({ roomId, offer, participantId }) => {
+            log(`WebRTC offer received`, { roomId, participantId, socketId: socket.id });
+            
+            try {
+                socket.to(roomId).emit('offer', {
+                    offer,
+                    participantId,
+                    socketId: socket.id
+                });
+                log(`WebRTC offer forwarded to room: ${roomId}`);
+            } catch (error) {
+                log(`Error forwarding offer: ${error.message}`, { roomId, participantId });
+            }
+        });
+
+        // WebRTC answer signaling
+        socket.on('answer', ({ roomId, answer, participantId }) => {
+            log(`WebRTC answer received`, { roomId, participantId, socketId: socket.id });
+            
+            try {
+                socket.to(roomId).emit('answer', {
+                    answer,
+                    participantId,
+                    socketId: socket.id
+                });
+                log(`WebRTC answer forwarded to room: ${roomId}`);
+            } catch (error) {
+                log(`Error forwarding answer: ${error.message}`, { roomId, participantId });
+            }
+        });
+
+        // ICE candidate signaling
+        socket.on('ice-candidate', ({ roomId, candidate, participantId }) => {
+            log(`ICE candidate received`, { roomId, participantId });
+            
+            try {
+                socket.to(roomId).emit('ice-candidate', {
+                    candidate,
+                    participantId,
+                    socketId: socket.id
+                });
+            } catch (error) {
+                log(`Error forwarding ICE candidate: ${error.message}`, { roomId, participantId });
+            }
+        });
+
+        // Chat message handling
+        socket.on('chat-message', ({ roomId, message, participantId }) => {
+            log(`Chat message received`, { roomId, participantId });
+            
+            try {
+                const participant = participants.get(socket.id);
+                if (participant && participant.roomId === roomId) {
+                    socket.to(roomId).emit('chat-message', {
+                        message,
+                        participantId,
+                        timestamp: new Date().toISOString(),
+                        socketId: socket.id
+                    });
+                }
+            } catch (error) {
+                log(`Error forwarding chat message: ${error.message}`, { roomId, participantId });
+            }
+        });
+
+        // Media state updates (audio/video toggle)
+        socket.on('media-state-update', ({ roomId, participantId, isAudioEnabled, isVideoEnabled }) => {
+            log(`Media state update`, { roomId, participantId, isAudioEnabled, isVideoEnabled });
+            
+            try {
+                socket.to(roomId).emit('participant-media-update', {
+                    participantId,
+                    socketId: socket.id,
+                    isAudioEnabled,
+                    isVideoEnabled,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                log(`Error forwarding media state update: ${error.message}`);
+            }
+        });
+
+        // Leave room explicitly
+        socket.on('leave-room', ({ roomId, participantId }) => {
+            log(`Leave room request`, { roomId, participantId, socketId: socket.id });
+            handleParticipantLeave(socket, roomId, participantId);
+        });
+
+        // Handle disconnect
+        socket.on('disconnect', (reason) => {
+            log(`Client disconnected: ${socket.id}, reason: ${reason}`);
+            
+            const participant = participants.get(socket.id);
+            if (participant) {
+                handleParticipantLeave(socket, participant.roomId, participant.id);
+            }
+        });
+
+        // Error handling
+        socket.on('error', (error) => {
+            log(`Socket error for ${socket.id}: ${error.message}`);
+        });
+    });
+
+    // Helper function to handle participant leaving
+    function handleParticipantLeave(socket, roomId, participantId) {
+        try {
+            const room = rooms.get(roomId);
+            if (room) {
+                // Remove participant from room
+                room.participants.delete(socket.id);
+                
+                // Notify other participants
+                socket.to(roomId).emit('participant-left', {
+                    participantId,
+                    socketId: socket.id,
+                    leftAt: new Date().toISOString()
+                });
+
+                // Clean up empty room
+                if (room.participants.size === 0) {
+                    rooms.delete(roomId);
+                    log(`Room deleted: ${roomId} (empty)`);
+                } else {
+                    log(`Participant left room`, { 
+                        roomId, 
+                        participantId, 
+                        remainingParticipants: room.participants.size 
+                    });
+                }
+            }
+
+            // Remove participant data
+            participants.delete(socket.id);
+            
+            // Leave socket room
+            socket.leave(roomId);
+
+        } catch (error) {
+            log(`Error handling participant leave: ${error.message}`, { roomId, participantId });
+        }
+    }
+
+    // Periodic cleanup of stale rooms and participants
+    setInterval(() => {
+        const now = new Date();
+        const staleThreshold = 1000 * 60 * 60; // 1 hour
+
+        // Clean up stale rooms
+        for (const [roomId, room] of rooms.entries()) {
+            if (now - room.createdAt > staleThreshold && room.participants.size === 0) {
+                rooms.delete(roomId);
+                log(`Cleaned up stale room: ${roomId}`);
+            }
+        }
+
+        // Clean up stale participants
+        for (const [socketId, participant] of participants.entries()) {
+            if (now - participant.joinedAt > staleThreshold) {
+                participants.delete(socketId);
+                log(`Cleaned up stale participant: ${participant.id}`);
+            }
+        }
+
+        // Log current status
+        if (rooms.size > 0 || participants.size > 0) {
+            log(`Current status: ${rooms.size} rooms, ${participants.size} participants`);
+        }
+    }, 1000 * 60 * 30); // Run every 30 minutes
+
+    // Graceful shutdown handling
+    const gracefulShutdown = () => {
+        log('Received shutdown signal, closing server gracefully...');
+        
+        // Notify all clients about server shutdown
+        io.emit('server-shutdown', {
+            message: 'Server is shutting down, please reconnect in a few moments'
+        });
+
+        // Close all connections
+        io.close(() => {
+            log('Socket.IO server closed');
+            server.close(() => {
+                log('HTTP server closed');
+                process.exit(0);
+            });
+        });
+    };
+
+    process.on('SIGTERM', gracefulShutdown);
+    process.on('SIGINT', gracefulShutdown);
+
+    // Start the server
+    server.listen(port, (err) => {
+        if (err) throw err;
+        log(`> Ready on http://${hostname}:${port}`);
+        log(`> Socket.IO server ready for video consultation signaling`);
+    });
+});
+
+// Handle unhandled rejections and exceptions
+process.on('unhandledRejection', (reason, promise) => {
+    log('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+    log('Uncaught Exception:', error.message);
+    process.exit(1);
+});
+                    <p class="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+                        Get instant access to ASHA workers and community health professionals. 
+                        Chat, schedule appointments, and receive healthcare guidance from certified experts.
+                    </p>
+                    <div class="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
+                        <div class="rounded-md shadow">
+                            <a href="/auth/signup" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10">
+                                Get Started
+                            </a>
+                        </div>
+                        <div class="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
+                            <a href="/auth/signin" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
+                                Sign In
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="mt-20">
+                    <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                        <!-- Chat Feature -->
+                        <div class="pt-6">
+                            <div class="flow-root bg-white rounded-lg px-6 pb-8">
+                                <div class="-mt-6">
+                                    <div>
+                                        <span class="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
+                                            <div class="text-2xl text-white">💬</div>
+                                        </span>
+                                    </div>
+                                    <h3 class="mt-8 text-lg font-medium text-gray-900 tracking-tight">
+                                        Direct Messaging
+                                    </h3>
+                                    <p class="mt-5 text-base text-gray-500">
+                                        Chat directly with ASHA workers and health professionals. Get instant responses and guidance for your health concerns.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Appointment Feature -->
+                        <div class="pt-6">
+                            <div class="flow-root bg-white rounded-lg px-6 pb-8">
+                                <div class="-mt-6">
+                                    <div>
+                                        <span class="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
+                                            <div class="text-2xl text-white">📅</div>
+                                        </span>
+                                    </div>
+                                    <h3 class="mt-8 text-lg font-medium text-gray-900 tracking-tight">
+                                        Easy Scheduling
+                                    </h3>
+                                    <p class="mt-5 text-base text-gray-500">
+                                        Book appointments with health workers at your convenience. Get reminders and follow-up notifications.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Emergency Feature -->
+                        <div class="pt-6">
+                            <div class="flow-root bg-white rounded-lg px-6 pb-8">
+                                <div class="-mt-6">
+                                    <div>
+                                        <span class="inline-flex items-center justify-center p-3 bg-red-500 rounded-md shadow-lg">
+                                            <div class="text-2xl text-white">🚨</div>
+                                        </span>
+                                    </div>
+                                    <h3 class="mt-8 text-lg font-medium text-gray-900 tracking-tight">
+                                        Emergency Support
+                                    </h3>
+                                    <p class="mt-5 text-base text-gray-500">
+                                        Get immediate help during emergencies. Priority access to health workers for urgent medical situations.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-white">
+                <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                    <div class="text-center">
+                        <h3 class="text-lg font-medium text-gray-900">Aarogya Sahayak</h3>
+                        <p class="mt-2 text-gray-600">
+                            Connecting communities with quality healthcare
+                        </p>
+                        <p class="mt-2 text-sm text-gray-500">
+                            Server is running successfully! 🎉
+                        </p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </body>
+    </html>
+  `);
+});
+
+// API Routes
+app.get('/api/test', (req, res) => {
+    res.json({
+        message: 'API is working!',
+        timestamp: new Date().toISOString(),
+        status: 'success'
+    });
+});
+
+app.listen(port, () => {
+    console.log(`🚀 Aarogya Sahayak server running at http://localhost:${port}`);
+    console.log('📱 Health Worker Connect & Communication platform is ready!');
+    console.log('✅ MongoDB connection can be added next');
+    console.log('✅ Socket.io for real-time chat can be added next');
+    console.log('✅ Authentication system can be added next');
+});

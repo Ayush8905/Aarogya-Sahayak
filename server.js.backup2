@@ -4,7 +4,10 @@ const { parse } = require('url');
 const next = require('next');
 const { Server } = require('socket.io');
 
-const dev = process.env.NODE_ENV !== 'production';
+const dev = process.env.NODE_ENV !== 'prod        console.log(`🚀 Aarogya Sahayak server ready on http://${hostname}:${port}`);
+        console.log(`📹 Video consultation server initialized`);
+        console.log(`🏥 Telemedicine features activated`);
+        console.log(`💻 Environment: ${dev ? 'development' : 'production'}`);on';
 const hostname = 'localhost';
 const port = process.env.PORT || 3001;
 
@@ -19,7 +22,7 @@ const participants = new Map();
 // Helper function to log with timestamp
 const log = (message, data = null) => {
     const timestamp = new Date().toISOString();
-    console.log('[' + timestamp + '] Aarogya Sahayak: ' + message, data ? JSON.stringify(data, null, 2) : '');
+    console.log(`[${timestamp}] Aarogya Sahayak: ${message}`, data ? JSON.stringify(data, null, 2) : '');
 };
 
 app.prepare().then(() => {
@@ -53,23 +56,23 @@ app.prepare().then(() => {
 
     // Socket.IO connection handling for video consultations
     io.on('connection', (socket) => {
-        log('New client connected: ' + socket.id);
+        log(`New client connected: ${socket.id}`);
 
         // Join video consultation room
         socket.on('join-video-room', (roomId) => {
             socket.join(roomId);
-
+            
             if (!rooms.has(roomId)) {
                 rooms.set(roomId, new Set());
-                log('Created new video consultation room: ' + roomId);
+                log(`Created new video consultation room: ${roomId}`);
             }
-
+            
             rooms.get(roomId).add(socket.id);
             participants.set(socket.id, roomId);
-
+            
             const roomSize = rooms.get(roomId).size;
-            log('Socket ' + socket.id + ' joined video room: ' + roomId + ' (' + roomSize + ' participants)');
-
+            log(`Socket ${socket.id} joined video room: ${roomId} (${roomSize} participants)`);
+            
             // Notify other participants in the room
             socket.to(roomId).emit('user-joined', {
                 socketId: socket.id,
@@ -88,8 +91,8 @@ app.prepare().then(() => {
         // Handle WebRTC signaling - video offer
         socket.on('video-offer', (data) => {
             const { roomId, offer, targetSocketId } = data;
-            log('Video offer from ' + socket.id + ' to ' + targetSocketId + ' in room ' + roomId);
-
+            log(`Video offer from ${socket.id} to ${targetSocketId} in room ${roomId}`);
+            
             if (targetSocketId) {
                 socket.to(targetSocketId).emit('video-offer', {
                     offer,
@@ -109,8 +112,8 @@ app.prepare().then(() => {
         // Handle WebRTC signaling - video answer
         socket.on('video-answer', (data) => {
             const { answer, targetSocketId, roomId } = data;
-            log('Video answer from ' + socket.id + ' to ' + targetSocketId);
-
+            log(`Video answer from ${socket.id} to ${targetSocketId}`);
+            
             socket.to(targetSocketId).emit('video-answer', {
                 answer,
                 fromSocketId: socket.id,
@@ -121,7 +124,7 @@ app.prepare().then(() => {
         // Handle ICE candidates for WebRTC connection
         socket.on('ice-candidate', (data) => {
             const { candidate, targetSocketId, roomId } = data;
-
+            
             if (targetSocketId) {
                 socket.to(targetSocketId).emit('ice-candidate', {
                     candidate,
@@ -145,14 +148,14 @@ app.prepare().then(() => {
         socket.on('media-state-change', (data) => {
             const { roomId, mediaState } = data;
             const userRoom = participants.get(socket.id) || roomId;
-
+            
             if (userRoom) {
                 socket.to(userRoom).emit('participant-media-change', {
                     socketId: socket.id,
                     mediaState,
                     roomId: userRoom
                 });
-                log('Media state change for ' + socket.id + ' in room ' + userRoom, mediaState);
+                log(`Media state change for ${socket.id} in room ${userRoom}:`, mediaState);
             }
         });
 
@@ -162,23 +165,69 @@ app.prepare().then(() => {
             if (roomId && rooms.has(roomId)) {
                 rooms.get(roomId).delete(socket.id);
                 const remainingParticipants = rooms.get(roomId).size;
-
+                
                 socket.to(roomId).emit('user-left', {
                     socketId: socket.id,
                     roomId,
                     participantCount: remainingParticipants
                 });
-
+                
                 socket.leave(roomId);
-                log('Socket ' + socket.id + ' left video room: ' + roomId + ' (' + remainingParticipants + ' remaining)');
-
+                log(`Socket ${socket.id} left video room: ${roomId} (${remainingParticipants} remaining)`);
+                
                 // Clean up empty rooms
                 if (remainingParticipants === 0) {
                     rooms.delete(roomId);
-                    log('Deleted empty video room: ' + roomId);
+                    log(`Deleted empty video room: ${roomId}`);
                 }
             }
             participants.delete(socket.id);
+        });
+
+        // Handle chat messages in video consultation
+        socket.on('consultation-chat', (data) => {
+            const { roomId, message, timestamp } = data;
+            const userRoom = participants.get(socket.id) || roomId;
+            
+            if (userRoom) {
+                socket.to(userRoom).emit('consultation-chat', {
+                    message,
+                    fromSocketId: socket.id,
+                    timestamp,
+                    roomId: userRoom
+                });
+                log(`Chat message in room ${userRoom} from ${socket.id}`);
+            }
+        });
+
+        // Handle connection quality reports
+        socket.on('connection-quality', (data) => {
+            const { roomId, quality } = data;
+            const userRoom = participants.get(socket.id) || roomId;
+            
+            if (userRoom) {
+                socket.to(userRoom).emit('participant-quality-update', {
+                    socketId: socket.id,
+                    quality,
+                    roomId: userRoom
+                });
+            }
+        });
+
+        // Handle emergency notifications during consultation
+        socket.on('consultation-emergency', (data) => {
+            const { roomId, emergency } = data;
+            const userRoom = participants.get(socket.id) || roomId;
+            
+            if (userRoom) {
+                io.to(userRoom).emit('consultation-emergency', {
+                    emergency,
+                    fromSocketId: socket.id,
+                    timestamp: new Date().toISOString(),
+                    roomId: userRoom
+                });
+                log(`EMERGENCY in video consultation room ${userRoom}:`, emergency);
+            }
         });
 
         // Handle disconnection cleanup
@@ -187,22 +236,22 @@ app.prepare().then(() => {
             if (roomId && rooms.has(roomId)) {
                 rooms.get(roomId).delete(socket.id);
                 const remainingParticipants = rooms.get(roomId).size;
-
+                
                 socket.to(roomId).emit('user-left', {
                     socketId: socket.id,
                     roomId,
                     participantCount: remainingParticipants,
                     reason: 'disconnect'
                 });
-
+                
                 // Clean up empty rooms
                 if (remainingParticipants === 0) {
                     rooms.delete(roomId);
-                    log('Deleted empty video room after disconnect: ' + roomId);
+                    log(`Deleted empty video room after disconnect: ${roomId}`);
                 }
             }
             participants.delete(socket.id);
-            log('Client disconnected: ' + socket.id + ' (reason: ' + reason + ')');
+            log(`Client disconnected: ${socket.id} (reason: ${reason})`);
         });
 
         // Heartbeat for connection monitoring
@@ -214,10 +263,10 @@ app.prepare().then(() => {
     // Start the server
     server.listen(port, (err) => {
         if (err) throw err;
-        console.log(' Aarogya Sahayak server ready on http://' + hostname + ':' + port);
-        console.log(' Video consultation server initialized');
-        console.log(' Telemedicine features activated');
-        console.log(' Environment: ' + (dev ? 'development' : 'production'));
+        console.log( Aarogya Sahayak server ready on http://:);
+        console.log( Video consultation server initialized);
+        console.log( Telemedicine features activated);
+        console.log( Environment: );
     });
 }).catch((ex) => {
     console.error('Error starting Aarogya Sahayak server:', ex.stack);
