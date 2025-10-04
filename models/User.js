@@ -43,6 +43,18 @@ const UserSchema = new mongoose.Schema({
         start: String,
         end: String
     },
+    // Rating fields for workers
+    avgRating: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5
+    },
+    reviewCount: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
     // For patients
     age: {
         type: Number,

@@ -3,12 +3,15 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import RatingModal from '@/components/RatingModal';
 
 export default function AppointmentsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedAppointment, setSelectedAppointment] = useState(null);
+    const [showRatingModal, setShowRatingModal] = useState(false);
 
     useEffect(() => {
         if (status === 'loading') return;
@@ -137,6 +140,22 @@ export default function AppointmentsPage() {
                                         </div>
 
                                         <div className="flex flex-col space-y-2 ml-4">
+                                            {appointment.status === 'completed' && !appointment.hasRating && session.user.role === 'patient' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedAppointment(appointment);
+                                                        setShowRatingModal(true);
+                                                    }}
+                                                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                                >
+                                                    ⭐ Rate Appointment
+                                                </button>
+                                            )}
+                                            {appointment.status === 'completed' && appointment.hasRating && (
+                                                <span className="text-green-600 text-sm font-medium px-4 py-2">
+                                                    ✓ Rated
+                                                </span>
+                                            )}
                                             {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
                                                 <>
                                                     <Link
@@ -173,6 +192,23 @@ export default function AppointmentsPage() {
                     )}
                 </div>
             </div>
+
+            {/* Rating Modal */}
+            {showRatingModal && selectedAppointment && (
+                <RatingModal
+                    appointment={selectedAppointment}
+                    onClose={() => {
+                        setShowRatingModal(false);
+                        setSelectedAppointment(null);
+                    }}
+                    onSubmit={(rating) => {
+                        setShowRatingModal(false);
+                        setSelectedAppointment(null);
+                        fetchAppointments(); // Refresh appointments
+                        alert('Thank you for your feedback!');
+                    }}
+                />
+            )}
         </div>
     );
 }

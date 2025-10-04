@@ -54,6 +54,15 @@ const AppointmentSchema = new mongoose.Schema({
     workerResponse: {
         message: String,
         respondedAt: Date
+    },
+    // Rating tracking
+    hasRating: {
+        type: Boolean,
+        default: false
+    },
+    ratingId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Rating'
     }
 }, {
     timestamps: true

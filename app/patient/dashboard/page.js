@@ -241,18 +241,39 @@ export default function PatientDashboard() {
                                         <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
                                             <span className="text-white font-bold text-lg">{worker.name?.charAt(0) || 'D'}</span>
                                         </div>
-                                        <div className="ml-3">
-                                            <h3 className="font-bold text-gray-800">{worker.name || 'Unknown Doctor'}</h3>
+                                        <div className="ml-3 flex-1">
+                                            <Link href={`/workers/${worker._id}`} className="hover:text-blue-600">
+                                                <h3 className="font-bold text-gray-800">{worker.name || 'Unknown Doctor'}</h3>
+                                            </Link>
                                             <p className="text-sm text-gray-600">{worker.specialization || 'General Medicine'}</p>
-                                            <p className="text-xs text-gray-500">{worker.email}</p>
+                                            {/* Rating Display */}
+                                            {worker.avgRating > 0 && (
+                                                <div className="flex items-center mt-1">
+                                                    <span className="text-yellow-400 text-sm">⭐</span>
+                                                    <span className="text-sm font-medium text-gray-700 ml-1">
+                                                        {worker.avgRating.toFixed(1)}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500 ml-1">
+                                                        ({worker.reviewCount || 0})
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => bookAppointment(worker._id)}
-                                        className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                                    >
-                                        Book Appointment
-                                    </button>
+                                    <div className="space-y-2">
+                                        <button
+                                            onClick={() => bookAppointment(worker._id)}
+                                            className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                                        >
+                                            Book Appointment
+                                        </button>
+                                        <Link
+                                            href={`/workers/${worker._id}`}
+                                            className="block text-center text-sm text-blue-600 hover:text-blue-800"
+                                        >
+                                            View Profile & Reviews
+                                        </Link>
+                                    </div>
                                 </div>
                             ))}
                         </div>
