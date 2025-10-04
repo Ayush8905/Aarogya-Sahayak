@@ -11,7 +11,7 @@ export default function RatingModal({ appointment, onClose, onSubmit }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (rating === 0) {
             setError('Please select a rating');
             return;
@@ -59,11 +59,10 @@ export default function RatingModal({ appointment, onClose, onSubmit }) {
                 className="focus:outline-none transition-transform hover:scale-110"
             >
                 <svg
-                    className={`w-10 h-10 ${
-                        star <= (hoveredRating || rating)
-                            ? 'text-yellow-400 fill-yellow-400'
-                            : 'text-gray-300'
-                    }`}
+                    className={`w-10 h-10 ${star <= (hoveredRating || rating)
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-gray-300'
+                        }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -95,12 +94,12 @@ export default function RatingModal({ appointment, onClose, onSubmit }) {
                 <form onSubmit={handleSubmit}>
                     {/* Appointment Info */}
                     <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                        <p className="font-medium text-gray-800">{appointment.title}</p>
+                        <p className="font-medium text-gray-800">{appointment.title || 'Appointment'}</p>
                         <p className="text-sm text-gray-600">
                             Dr. {appointment.worker?.name || 'Healthcare Worker'}
                         </p>
                         <p className="text-sm text-gray-500">
-                            {new Date(appointment.scheduledDate).toLocaleDateString()}
+                            {new Date(appointment.scheduledDate).toLocaleDateString()} at {new Date(appointment.scheduledDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                     </div>
 

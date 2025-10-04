@@ -60,11 +60,11 @@ WaitlistSchema.index({ patient: 1, status: 1 });
 WaitlistSchema.index({ expiresAt: 1 }); // For cleanup jobs
 
 // Compound index to prevent duplicate active waitlist entries
-WaitlistSchema.index({ 
-    patient: 1, 
-    worker: 1, 
-    status: 1 
-}, { 
+WaitlistSchema.index({
+    patient: 1,
+    worker: 1,
+    status: 1
+}, {
     unique: true,
     partialFilterExpression: { status: { $in: ['waiting', 'notified'] } }
 });

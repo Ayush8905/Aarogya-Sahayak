@@ -92,90 +92,114 @@ export default function AppointmentsPage() {
 
                     {appointments.length > 0 ? (
                         <div className="space-y-4">
-                            {appointments.map((appointment) => (
-                                <div key={appointment._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <div className="flex items-center mb-2">
-                                                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center mr-3">
-                                                    <span className="text-white font-bold">
-                                                        {appointment.workerName ? appointment.workerName.charAt(0) : 'H'}
-                                                    </span>
+                            {appointments.map((appointment) => {
+                                const workerName = appointment.worker?.name || 'Healthcare Worker';
+                                const workerSpecialization = appointment.worker?.specialization || 'General Consultation';
+                                const appointmentDate = new Date(appointment.scheduledDate);
+                                const appointmentTime = appointmentDate.toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+
+                                return (
+                                    <div key={appointment._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                                <div className="flex items-center mb-2">
+                                                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center mr-3">
+                                                        <span className="text-white font-bold">
+                                                            {workerName.charAt(0)}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-gray-800">
+                                                            Dr. {workerName}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-600">{workerSpecialization}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h3 className="font-bold text-gray-800">
-                                                        {appointment.workerName || 'Healthcare Worker'}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-600">{appointment.type || 'General Consultation'}</p>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-700">Date</p>
+                                                        <p className="text-gray-900">{appointmentDate.toLocaleDateString()}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-700">Time</p>
+                                                        <p className="text-gray-900">{appointmentTime}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-700">Status</p>
+                                                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${appointment.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                                                                appointment.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                                    appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                                        appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                            appointment.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                                                'bg-gray-100 text-gray-800'
+                                                            }`}>
+                                                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                                                        </span>
+                                                    </div>
                                                 </div>
+
+                                                {appointment.title && (
+                                                    <div className="mt-4">
+                                                        <p className="text-sm font-medium text-gray-700">Title</p>
+                                                        <p className="text-gray-900 text-sm">{appointment.title}</p>
+                                                    </div>
+                                                )}
+                                                {appointment.description && (
+                                                    <div className="mt-4">
+                                                        <p className="text-sm font-medium text-gray-700">Description</p>
+                                                        <p className="text-gray-900 text-sm">{appointment.description}</p>
+                                                    </div>
+                                                )}
+                                                {appointment.notes && (
+                                                    <div className="mt-4">
+                                                        <p className="text-sm font-medium text-gray-700">Notes</p>
+                                                        <p className="text-gray-900 text-sm">{appointment.notes}</p>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700">Date</p>
-                                                    <p className="text-gray-900">{new Date(appointment.date).toLocaleDateString()}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700">Time</p>
-                                                    <p className="text-gray-900">{appointment.time}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700">Status</p>
-                                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                                            appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                                appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                    'bg-gray-100 text-gray-800'
-                                                        }`}>
-                                                        {appointment.status || 'pending'}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {appointment.notes && (
-                                                <div className="mt-4">
-                                                    <p className="text-sm font-medium text-gray-700">Notes</p>
-                                                    <p className="text-gray-900 text-sm">{appointment.notes}</p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex flex-col space-y-2 ml-4">
-                                            {appointment.status === 'completed' && !appointment.hasRating && session.user.role === 'patient' && (
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedAppointment(appointment);
-                                                        setShowRatingModal(true);
-                                                    }}
-                                                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                                                >
-                                                    ⭐ Rate Appointment
-                                                </button>
-                                            )}
-                                            {appointment.status === 'completed' && appointment.hasRating && (
-                                                <span className="text-green-600 text-sm font-medium px-4 py-2">
-                                                    ✓ Rated
-                                                </span>
-                                            )}
-                                            {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
-                                                <>
-                                                    <Link
-                                                        href={`/video-consultations?appointmentId=${appointment._id}`}
-                                                        className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors text-center"
-                                                    >
-                                                        Join Video Call
-                                                    </Link>
+                                            <div className="flex flex-col space-y-2 ml-4">
+                                                {appointment.status === 'completed' && !appointment.hasRating && session.user.role === 'patient' && (
                                                     <button
-                                                        onClick={() => cancelAppointment(appointment._id)}
-                                                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                                        onClick={() => {
+                                                            setSelectedAppointment(appointment);
+                                                            setShowRatingModal(true);
+                                                        }}
+                                                        className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                                                     >
-                                                        Cancel
+                                                        ⭐ Rate Appointment
                                                     </button>
-                                                </>
-                                            )}
+                                                )}
+                                                {appointment.status === 'completed' && appointment.hasRating && (
+                                                    <span className="text-green-600 text-sm font-medium px-4 py-2">
+                                                        ✓ Rated
+                                                    </span>
+                                                )}
+                                                {appointment.status !== 'cancelled' && appointment.status !== 'completed' && appointment.status !== 'rejected' && (
+                                                    <>
+                                                        <Link
+                                                            href={`/video-consultations?appointmentId=${appointment._id}`}
+                                                            className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors text-center"
+                                                        >
+                                                            Join Video Call
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => cancelAppointment(appointment._id)}
+                                                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-12">

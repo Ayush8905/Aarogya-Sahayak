@@ -35,7 +35,7 @@ export async function GET(request, { params }) {
 
         // Calculate rating statistics
         const allRatings = await Rating.find({ worker: workerId });
-        
+
         const stats = {
             avgRating: worker.avgRating || 0,
             totalReviews: worker.reviewCount || 0,
@@ -48,7 +48,7 @@ export async function GET(request, { params }) {
             }
         };
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             reviews,
             stats,
             worker: {

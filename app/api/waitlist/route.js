@@ -11,7 +11,7 @@ export async function GET(request) {
     try {
         const authOptions = await getAuthOptions();
         const session = await getServerSession(authOptions);
-        
+
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -52,23 +52,23 @@ export async function POST(request) {
     try {
         const authOptions = await getAuthOptions();
         const session = await getServerSession(authOptions);
-        
+
         if (!session || session.user.role !== 'patient') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { 
-            workerId, 
-            preferredDate, 
-            preferredTimeSlot, 
-            appointmentType, 
-            notes 
+        const {
+            workerId,
+            preferredDate,
+            preferredTimeSlot,
+            appointmentType,
+            notes
         } = await request.json();
 
         // Validation
         if (!workerId || !preferredDate || !appointmentType) {
-            return NextResponse.json({ 
-                error: 'Missing required fields' 
+            return NextResponse.json({
+                error: 'Missing required fields'
             }, { status: 400 });
         }
 
@@ -88,8 +88,8 @@ export async function POST(request) {
         });
 
         if (existingEntry) {
-            return NextResponse.json({ 
-                error: 'You are already on the waitlist for this doctor' 
+            return NextResponse.json({
+                error: 'You are already on the waitlist for this doctor'
             }, { status: 400 });
         }
 
@@ -123,18 +123,18 @@ export async function POST(request) {
             .populate('patient', 'name email phone')
             .populate('worker', 'name specialization');
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             waitlist: populatedEntry,
-            message: 'Successfully joined waitlist' 
+            message: 'Successfully joined waitlist'
         }, { status: 201 });
 
     } catch (error) {
         console.error('Create waitlist entry error:', error);
-        
+
         // Handle duplicate entry error
         if (error.code === 11000) {
-            return NextResponse.json({ 
-                error: 'You are already on the waitlist for this doctor' 
+            return NextResponse.json({
+                error: 'You are already on the waitlist for this doctor'
             }, { status: 400 });
         }
 
@@ -147,7 +147,7 @@ export async function PUT(request) {
     try {
         const authOptions = await getAuthOptions();
         const session = await getServerSession(authOptions);
-        
+
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -181,7 +181,7 @@ export async function PUT(request) {
 
         if (status === 'notified') {
             waitlistEntry.notifiedAt = new Date();
-            
+
             // Notify patient about slot availability
             await Notification.create({
                 recipient: waitlistEntry.patient,
@@ -199,9 +199,9 @@ export async function PUT(request) {
 
         await waitlistEntry.save();
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             waitlist: waitlistEntry,
-            message: 'Waitlist updated successfully' 
+            message: 'Waitlist updated successfully'
         });
 
     } catch (error) {
@@ -215,7 +215,7 @@ export async function DELETE(request) {
     try {
         const authOptions = await getAuthOptions();
         const session = await getServerSession(authOptions);
-        
+
         if (!session || session.user.role !== 'patient') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -242,8 +242,8 @@ export async function DELETE(request) {
         waitlistEntry.status = 'cancelled';
         await waitlistEntry.save();
 
-        return NextResponse.json({ 
-            message: 'Removed from waitlist successfully' 
+        return NextResponse.json({
+            message: 'Removed from waitlist successfully'
         });
 
     } catch (error) {

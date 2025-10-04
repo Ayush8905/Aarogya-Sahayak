@@ -147,25 +147,63 @@ const seedDatabase = async () => {
         console.log('📅 Creating sample appointments...');
 
         const appointments = await Appointment.create([
+            // Completed appointments (for testing rating feature)
             {
                 patient: patients[0]._id, // Ayush
                 worker: workers[0]._id,   // Dr. Rajesh Kumar
-                title: 'General Health Checkup',
+                title: 'General Health Checkup - COMPLETED',
                 description: 'Routine health examination and blood pressure monitoring',
+                scheduledDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+                duration: 30,
+                status: 'completed', // COMPLETED - Can be rated!
+                appointmentType: 'checkup',
+                notes: 'Patient has history of hypertension. Checkup completed successfully.',
+                hasRating: false // Not yet rated
+            },
+            {
+                patient: patients[0]._id, // Ayush
+                worker: workers[1]._id,   // Dr. Priya Sharma
+                title: 'Consultation - COMPLETED',
+                description: 'General health consultation',
+                scheduledDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+                duration: 45,
+                status: 'completed', // COMPLETED - Can be rated!
+                appointmentType: 'consultation',
+                notes: 'General consultation completed.',
+                hasRating: false // Not yet rated
+            },
+            {
+                patient: patients[1]._id, // Ravi Singh
+                worker: workers[2]._id,   // Dr. Amit Patel
+                title: 'Cardiology Checkup - COMPLETED',
+                description: 'Heart health screening',
+                scheduledDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+                duration: 60,
+                status: 'completed', // COMPLETED - Can be rated!
+                appointmentType: 'checkup',
+                notes: 'Cardiac screening completed. All vitals normal.',
+                hasRating: false // Not yet rated
+            },
+            // Upcoming appointments
+            {
+                patient: patients[0]._id, // Ayush
+                worker: workers[0]._id,   // Dr. Rajesh Kumar
+                title: 'Follow-up Checkup',
+                description: 'Follow-up health examination',
                 scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
                 duration: 30,
-                status: 'pending',
-                appointmentType: 'checkup',
-                notes: 'Patient has history of hypertension'
+                status: 'approved',
+                appointmentType: 'follow-up',
+                notes: 'Follow-up for previous checkup'
             },
             {
                 patient: patients[1]._id, // Ravi Singh
                 worker: workers[1]._id,   // Dr. Priya Sharma
-                title: 'Consultation',
-                description: 'General health consultation',
+                title: 'Pediatric Consultation',
+                description: 'Consultation for child health',
                 scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
                 duration: 45,
-                status: 'approved',
+                status: 'pending',
                 appointmentType: 'consultation',
                 notes: 'New patient consultation'
             },
@@ -182,7 +220,7 @@ const seedDatabase = async () => {
             }
         ]);
 
-        console.log(`✅ Created ${appointments.length} appointments`);
+        console.log(`✅ Created ${appointments.length} appointments (${appointments.filter(a => a.status === 'completed').length} completed, ready to rate)`);
 
         // Create sample notifications
         console.log('🔔 Creating sample notifications...');

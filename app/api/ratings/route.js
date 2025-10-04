@@ -12,7 +12,7 @@ export async function GET(request) {
     try {
         const authOptions = await getAuthOptions();
         const session = await getServerSession(authOptions);
-        
+
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -63,7 +63,7 @@ export async function POST(request) {
     try {
         const authOptions = await getAuthOptions();
         const session = await getServerSession(authOptions);
-        
+
         if (!session || session.user.role !== 'patient') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -98,16 +98,16 @@ export async function POST(request) {
 
         // Check if appointment is completed
         if (appointment.status !== 'completed') {
-            return NextResponse.json({ 
-                error: 'Can only rate completed appointments' 
+            return NextResponse.json({
+                error: 'Can only rate completed appointments'
             }, { status: 400 });
         }
 
         // Check if rating already exists
         const existingRating = await Rating.findOne({ appointment: appointmentId });
         if (existingRating) {
-            return NextResponse.json({ 
-                error: 'You have already rated this appointment' 
+            return NextResponse.json({
+                error: 'You have already rated this appointment'
             }, { status: 400 });
         }
 
@@ -130,7 +130,7 @@ export async function POST(request) {
         // Update worker's average rating
         const allRatings = await Rating.find({ worker: workerId });
         const avgRating = allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length;
-        
+
         await User.findByIdAndUpdate(workerId, {
             avgRating: Math.round(avgRating * 10) / 10, // Round to 1 decimal
             reviewCount: allRatings.length
@@ -150,9 +150,9 @@ export async function POST(request) {
             .populate('worker', 'name specialization')
             .populate('appointment', 'title scheduledDate');
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             rating: populatedRating,
-            message: 'Rating submitted successfully' 
+            message: 'Rating submitted successfully'
         }, { status: 201 });
 
     } catch (error) {
@@ -166,7 +166,7 @@ export async function PUT(request) {
     try {
         const authOptions = await getAuthOptions();
         const session = await getServerSession(authOptions);
-        
+
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -196,9 +196,9 @@ export async function PUT(request) {
             rating.respondedAt = new Date();
             await rating.save();
 
-            return NextResponse.json({ 
+            return NextResponse.json({
                 rating,
-                message: 'Response added successfully' 
+                message: 'Response added successfully'
             });
         }
 
@@ -210,8 +210,8 @@ export async function PUT(request) {
             rating.reportedAt = new Date();
             await rating.save();
 
-            return NextResponse.json({ 
-                message: 'Review reported successfully' 
+            return NextResponse.json({
+                message: 'Review reported successfully'
             });
         }
 

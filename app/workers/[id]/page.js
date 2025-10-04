@@ -39,11 +39,10 @@ export default function WorkerProfile({ params }) {
         return [...Array(5)].map((_, index) => (
             <svg
                 key={index}
-                className={`w-5 h-5 ${
-                    index < Math.floor(rating)
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-gray-300'
-                }`}
+                className={`w-5 h-5 ${index < Math.floor(rating)
+                    ? 'text-yellow-400 fill-yellow-400'
+                    : 'text-gray-300'
+                    }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -105,7 +104,7 @@ export default function WorkerProfile({ params }) {
                         <div className="flex-1 text-center md:text-left">
                             <h1 className="text-3xl font-bold text-gray-800 mb-2">Dr. {worker.name}</h1>
                             <p className="text-xl text-gray-600 mb-4">{worker.specialization}</p>
-                            
+
                             {/* Rating Summary */}
                             <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
                                 <div className="flex items-center gap-2">
@@ -140,21 +139,19 @@ export default function WorkerProfile({ params }) {
                     <div className="flex gap-4 border-b border-gray-200">
                         <button
                             onClick={() => setActiveTab('about')}
-                            className={`px-4 py-2 font-medium transition-colors ${
-                                activeTab === 'about'
-                                    ? 'text-blue-600 border-b-2 border-blue-600'
-                                    : 'text-gray-600 hover:text-gray-800'
-                            }`}
+                            className={`px-4 py-2 font-medium transition-colors ${activeTab === 'about'
+                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                : 'text-gray-600 hover:text-gray-800'
+                                }`}
                         >
                             About
                         </button>
                         <button
                             onClick={() => setActiveTab('reviews')}
-                            className={`px-4 py-2 font-medium transition-colors ${
-                                activeTab === 'reviews'
-                                    ? 'text-blue-600 border-b-2 border-blue-600'
-                                    : 'text-gray-600 hover:text-gray-800'
-                            }`}
+                            className={`px-4 py-2 font-medium transition-colors ${activeTab === 'reviews'
+                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                : 'text-gray-600 hover:text-gray-800'
+                                }`}
                         >
                             Reviews ({reviews.length})
                         </button>
@@ -162,34 +159,64 @@ export default function WorkerProfile({ params }) {
                 </div>
 
                 {/* About Tab */}
-                {activeTab === 'about' && stats && (
-                    <div className="glass p-6 rounded-2xl">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Rating Distribution</h2>
-                        <div className="space-y-3">
-                            {[5, 4, 3, 2, 1].map((star) => {
-                                const count = stats.ratingDistribution[star] || 0;
-                                const percentage = stats.totalReviews > 0 
-                                    ? (count / stats.totalReviews) * 100 
-                                    : 0;
-
-                                return (
-                                    <div key={star} className="flex items-center gap-4">
-                                        <span className="text-sm font-medium text-gray-700 w-12">
-                                            {star} star
-                                        </span>
-                                        <div className="flex-1 bg-gray-200 rounded-full h-3">
-                                            <div
-                                                className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all"
-                                                style={{ width: `${percentage}%` }}
-                                            ></div>
-                                        </div>
-                                        <span className="text-sm text-gray-600 w-12 text-right">
-                                            {count}
-                                        </span>
+                {activeTab === 'about' && (
+                    <div className="space-y-6">
+                        <div className="glass p-6 rounded-2xl">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">About Dr. {worker.name}</h2>
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="font-semibold text-gray-700 mb-2">Specialization</h3>
+                                    <p className="text-gray-600">{worker.specialization || 'General Medicine'}</p>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-gray-700 mb-2">Experience</h3>
+                                    <p className="text-gray-600">{worker.experience || 0} years</p>
+                                </div>
+                                {worker.qualifications && (
+                                    <div>
+                                        <h3 className="font-semibold text-gray-700 mb-2">Qualifications</h3>
+                                        <p className="text-gray-600">{worker.qualifications}</p>
                                     </div>
-                                );
-                            })}
+                                )}
+                                {worker.languages && (
+                                    <div>
+                                        <h3 className="font-semibold text-gray-700 mb-2">Languages</h3>
+                                        <p className="text-gray-600">{worker.languages}</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+
+                        {stats && (
+                            <div className="glass p-6 rounded-2xl">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-6">Rating Distribution</h2>
+                                <div className="space-y-3">
+                                    {[5, 4, 3, 2, 1].map((star) => {
+                                        const count = stats.ratingDistribution[star] || 0;
+                                        const percentage = stats.totalReviews > 0
+                                            ? (count / stats.totalReviews) * 100
+                                            : 0;
+
+                                        return (
+                                            <div key={star} className="flex items-center gap-4">
+                                                <span className="text-sm font-medium text-gray-700 w-16">
+                                                    {star} {star === 1 ? 'star' : 'stars'}
+                                                </span>
+                                                <div className="flex-1 bg-gray-200 rounded-full h-3">
+                                                    <div
+                                                        className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all"
+                                                        style={{ width: `${percentage}%` }}
+                                                    ></div>
+                                                </div>
+                                                <span className="text-sm text-gray-600 w-12 text-right">
+                                                    {count}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
