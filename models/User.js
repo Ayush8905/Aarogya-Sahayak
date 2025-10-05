@@ -19,7 +19,7 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['patient', 'worker'],
+        enum: ['patient', 'worker', 'seller'],
         required: true
     },
     phone: {
@@ -69,6 +69,31 @@ const UserSchema = new mongoose.Schema({
         date: Date,
         notes: String
     }],
+    // For medicine sellers
+    shopName: {
+        type: String,
+        trim: true
+    },
+    shopAddress: {
+        type: String,
+        trim: true
+    },
+    licenseNumber: {
+        type: String,
+        trim: true
+    },
+    gstNumber: {
+        type: String,
+        trim: true
+    },
+    isVerifiedSeller: {
+        type: Boolean,
+        default: false
+    },
+    totalSales: {
+        type: Number,
+        default: 0
+    },
     // Worker-Patient assignments
     assignedWorkers: [{
         type: mongoose.Schema.Types.ObjectId,

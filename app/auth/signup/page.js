@@ -132,7 +132,19 @@ export default function SignUp() {
                         >
                             <option value="patient">Patient</option>
                             <option value="worker">Health Worker</option>
+                            <option value="seller">Medicine Seller</option>
                         </select>
+
+                        {formData.role === 'seller' && (
+                            <div className="bg-green-50 p-4 rounded-md">
+                                <p className="text-sm text-green-800 font-medium mb-2">
+                                    💊 Medicine Seller Account
+                                </p>
+                                <p className="text-xs text-green-600">
+                                    You'll be able to add and manage medicines in your store after registration.
+                                </p>
+                            </div>
+                        )}
 
                         {formData.role === 'worker' && (
                             <>

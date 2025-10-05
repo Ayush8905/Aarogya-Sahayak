@@ -193,6 +193,18 @@ export default function PatientDashboard() {
                             <p className="text-sm text-gray-600">Medical history</p>
                         </div>
                     </Link>
+                    <Link href="/medmart" className="glass p-6 rounded-2xl card-hover group">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center mb-3">
+                                <span className="text-white text-xl">💊</span>
+                            </div>
+                            <h3 className="font-bold text-gray-800 mb-1">MedMart Store</h3>
+                            <p className="text-sm text-gray-600">Buy medicines online</p>
+                        </div>
+                    </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <Link href="/emergency" className="glass p-6 rounded-2xl card-hover group">
                         <div className="flex flex-col items-center text-center">
                             <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mb-3">

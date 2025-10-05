@@ -17,6 +17,8 @@ export default function Home() {
         router.push('/patient/dashboard');
       } else if (session.user.role === 'worker') {
         router.push('/worker/dashboard');
+      } else if (session.user.role === 'seller') {
+        router.push('/seller/dashboard');
       }
     }
   }, [session, status, router]);

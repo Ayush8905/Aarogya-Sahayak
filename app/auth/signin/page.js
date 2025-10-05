@@ -33,6 +33,11 @@ export default function SignIn() {
                     router.push('/patient/dashboard');
                 } else if (session?.user?.role === 'worker') {
                     router.push('/worker/dashboard');
+                } else if (session?.user?.role === 'seller') {
+                    router.push('/seller/dashboard');
+                } else {
+                    // Fallback to home page if role is unknown
+                    router.push('/');
                 }
             }
         } catch (error) {

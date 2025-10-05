@@ -143,6 +143,26 @@ const seedDatabase = async () => {
         console.log(`✅ Created ${workers.length} healthcare workers`);
         console.log(`✅ Created ${patients.length} patients`);
 
+        // Create sample medicine sellers
+        const sellers = await User.create([
+            {
+                name: 'MedPlus Pharmacy',
+                email: 'seller@medplus.com',
+                password: hashedPassword,
+                role: 'seller',
+                phone: '+91-9876543230'
+            },
+            {
+                name: 'Apollo Pharmacy',
+                email: 'seller@apollo.com',
+                password: hashedPassword,
+                role: 'seller',
+                phone: '+91-9876543231'
+            }
+        ]);
+
+        console.log(`✅ Created ${sellers.length} medicine sellers`);
+
         // Create sample appointments
         console.log('📅 Creating sample appointments...');
 
@@ -280,13 +300,15 @@ const seedDatabase = async () => {
         console.log('\n📊 Summary:');
         console.log(`   👨‍⚕️ Healthcare Workers: ${workers.length}`);
         console.log(`   🤒 Patients: ${patients.length}`);
-        console.log(`   📅 Appointments: ${appointments.length}`);
+        console.log(`   � Medicine Sellers: ${sellers.length}`);
+        console.log(`   �📅 Appointments: ${appointments.length}`);
         console.log(`   🔔 Notifications: ${notifications.length}`);
         console.log(`   💬 Messages: ${messages.length}`);
 
         console.log('\n🔐 Demo Login Credentials:');
         console.log('   Patient: a@gmail.com / 123456');
         console.log('   Doctor: rajesh.kumar@aarogya.com / 123456');
+        console.log('   Seller: seller@medplus.com / 123456');
 
         process.exit(0);
 

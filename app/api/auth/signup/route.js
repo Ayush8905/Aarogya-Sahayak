@@ -15,9 +15,9 @@ export async function POST(request) {
             );
         }
 
-        if (!['patient', 'worker'].includes(role)) {
+        if (!['patient', 'worker', 'seller'].includes(role)) {
             return NextResponse.json(
-                { error: 'Invalid role' },
+                { error: 'Invalid role. Must be patient, worker, or seller' },
                 { status: 400 }
             );
         }
@@ -79,6 +79,13 @@ export async function POST(request) {
             userData.gender = gender;
             userData.assignedWorkers = [];
             userData.medicalHistory = [];
+        } else if (role === 'seller') {
+            userData.shopName = userData.shopName || name + "'s MedMart";
+            userData.shopAddress = userData.shopAddress || 'Online Store';
+            userData.gstNumber = userData.gstNumber || '';
+            userData.licenseNumber = userData.licenseNumber || '';
+            userData.isVerifiedSeller = false;
+            userData.totalSales = 0;
         }
 
         // Create user
